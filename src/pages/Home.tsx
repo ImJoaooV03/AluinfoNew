@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import NewsCard from '../components/NewsCard';
 import SectionHeader from '../components/SectionHeader';
 import HeroCarousel from '../components/HeroCarousel';
-import NewsletterWidget from '../components/NewsletterWidget';
 import SupplierCard from '../components/SupplierCard';
 import FoundryCard from '../components/FoundryCard';
-import { technicalMaterials, ebooks, events, sidebarAds, suppliers, foundries } from '../data/mockData';
-import { Wrench, Book, Calendar, TrendingUp, Users, Factory, Loader2 } from 'lucide-react';
+import AdSpot from '../components/AdSpot';
+import SidebarAds from '../components/SidebarAds';
+import { technicalMaterials, ebooks, events, suppliers, foundries } from '../data/mockData';
+import { Wrench, Book, Calendar, Users, Factory, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { NewsItem } from '../types';
 
@@ -37,7 +38,7 @@ const Home = () => {
             category: item.category,
             date: new Date(item.publish_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
             author: item.author,
-            imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
+            imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
             isHighlight: item.is_highlight,
             type: 'news'
           }));
@@ -80,13 +81,22 @@ const Home = () => {
 
       <main className="container mx-auto px-4 py-8">
         
-        {/* Top Ad Banners */}
+        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
         <div className="w-full mb-8">
-            <div className="bg-gray-200 h-[150px] rounded flex items-center justify-center overflow-hidden shadow-sm">
-                <img 
-                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
-                  alt="MAGMA Engineering" 
-                  className="w-full h-full object-cover" 
+            {/* Desktop Version */}
+            <div className="hidden md:block">
+                <AdSpot 
+                    position="top_large" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                />
+            </div>
+            {/* Mobile Version */}
+            <div className="block md:hidden">
+                <AdSpot 
+                    position="top_large_mobile" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
@@ -127,10 +137,12 @@ const Home = () => {
                     )}
                 </section>
 
-                {/* Banner Middle */}
-                <div className="w-full h-[150px] bg-gray-300 rounded overflow-hidden">
-                     <img src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/555555/ffffff?text=WALBERT+Modelacao+e+Ferramentaria" className="w-full h-full object-cover" />
-                </div>
+                {/* Banner Meio 1 (Acima Fornecedores) */}
+                <AdSpot 
+                    position="home_middle_1" 
+                    className="w-full bg-gray-300"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/555555/ffffff?text=WALBERT+Modelacao+e+Ferramentaria"
+                />
 
                 {/* Verified Suppliers Section */}
                 <section>
@@ -162,13 +174,12 @@ const Home = () => {
                     </div>
                 </section>
 
-                {/* Banner Middle 2 */}
-                <div className="w-full h-[150px] bg-amber-100 rounded overflow-hidden relative">
-                    <img src="https://images.unsplash.com/photo-1565514020176-db7936162608?q=80&w=1000&auto=format&fit=crop" className="w-full h-full object-cover opacity-80" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h2 className="text-4xl font-bold text-white drop-shadow-lg uppercase">Automatic</h2>
-                    </div>
-                </div>
+                {/* Banner Meio 2 (Acima Ebooks) */}
+                <AdSpot 
+                    position="home_middle_2" 
+                    className="w-full bg-amber-100"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Automatic"
+                />
 
                 {/* E-books Section */}
                 <section>
@@ -180,10 +191,12 @@ const Home = () => {
                     </div>
                 </section>
 
-                {/* Banner Moved Here (Above Events) */}
-                <div className="w-full h-[150px] bg-gray-200 rounded flex items-center justify-center">
-                    <span className="text-gray-500 font-bold text-xl uppercase tracking-widest">Sua Empresa Com...</span>
-                </div>
+                {/* Banner Final (Acima Eventos) */}
+                <AdSpot 
+                    position="home_final" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Sua+Empresa+Com..."
+                />
 
                 {/* Events Section */}
                 <section>
@@ -197,59 +210,8 @@ const Home = () => {
 
             </div>
 
-            {/* Sidebar Column */}
-            <aside className="lg:col-span-3 space-y-6">
-                
-                {/* LME Indicators Widget */}
-                <div className="w-full">
-                     <SectionHeader title="Indicadores LME" icon={<TrendingUp size={20} />} hasButton={false} />
-                     <div className="bg-white border border-gray-200 p-4 rounded-sm w-full shadow-sm">
-                        <div className="flex justify-between items-center mb-2">
-                            <div>
-                                <h4 className="font-bold text-gray-800 text-sm">ALUMÍNIO</h4>
-                                <span className="text-xs text-gray-500">AL</span>
-                            </div>
-                            <div className="text-right">
-                                <div className="font-bold text-gray-900 text-lg">$2868.00</div>
-                                <div className="text-[11px] text-green-600 font-bold">+1.40%</div>
-                            </div>
-                        </div>
-                        <div className="text-[10px] text-gray-400 mt-2 border-t border-gray-100 pt-2">
-                            1 de dezembro de 2025
-                        </div>
-                     </div>
-                </div>
-
-                {sidebarAds.map((ad, index) => (
-                    <React.Fragment key={ad.id}>
-                        {/* Insert Newsletter before the 3rd ad (index 2) which is AluInfo Ads */}
-                        {index === 2 && <NewsletterWidget />}
-                        
-                        <div className="bg-white border border-gray-200 p-1 rounded-sm shadow-sm">
-                            <img 
-                                src={ad.imageUrl} 
-                                alt={ad.alt} 
-                                className="w-full h-[150px] object-cover rounded-sm" 
-                            />
-                        </div>
-                    </React.Fragment>
-                ))}
-                
-                {/* Most Read Widget */}
-                <div className="bg-white border border-gray-200 p-4 rounded-sm w-full">
-                     <h3 className="font-bold text-gray-800 border-b pb-2 mb-3 text-sm">Mais Lidas</h3>
-                     <ul className="space-y-3">
-                        {news.slice(0, 4).map((item, i) => (
-                            <li key={item.id} className="flex gap-3 items-start group cursor-pointer">
-                                <span className="text-2xl font-bold text-gray-200 leading-none group-hover:text-primary transition-colors">{i + 1}</span>
-                                <Link to={`/noticia/${item.id}`} className="text-xs text-gray-600 line-clamp-2 group-hover:text-gray-900">
-                                    {item.title}
-                                </Link>
-                            </li>
-                        ))}
-                     </ul>
-                </div>
-            </aside>
+            {/* Sidebar Column (Global) */}
+            <SidebarAds mostReadNews={news.slice(0, 4)} />
 
         </div>
       </main>

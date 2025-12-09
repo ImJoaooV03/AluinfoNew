@@ -20,15 +20,18 @@ const AdEditor = () => {
     client_name: '',
     image_url: '',
     link_url: '',
-    position: 'sidebar',
+    position: 'sidebar_1', // Default seguro
     status: 'active',
     start_date: new Date().toISOString().split('T')[0],
-    end_date: ''
+    end_date: '',
+    display_order: 1 // Mantido apenas para compatibilidade com o banco, mas fixo em 1
   });
 
   useEffect(() => {
     if (isEditing) {
       fetchAd();
+    } else {
+        setFetching(false);
     }
   }, [id]);
 
@@ -48,10 +51,11 @@ const AdEditor = () => {
           client_name: data.client_name || '',
           image_url: data.image_url || '',
           link_url: data.link_url || '',
-          position: data.position || 'sidebar',
+          position: data.position || 'sidebar_1',
           status: data.status || 'active',
           start_date: data.start_date || new Date().toISOString().split('T')[0],
-          end_date: data.end_date || ''
+          end_date: data.end_date || '',
+          display_order: data.display_order || 1
         });
       }
     } catch (err: any) {
@@ -106,8 +110,9 @@ const AdEditor = () => {
     try {
       const payload = {
         ...formData,
-        end_date: formData.end_date || null, // Convert empty string to null
+        end_date: formData.end_date || null,
         updated_at: new Date().toISOString(),
+        display_order: 1 // Forçamos 1 pois a posição agora é única/específica
       };
 
       let error;
@@ -284,7 +289,7 @@ const AdEditor = () => {
                             <div className="flex flex-col items-center text-gray-500">
                                 <UploadCloud className="mb-2" size={24} />
                                 <span className="text-xs font-bold">Clique para enviar</span>
-                                <span className="text-[10px] text-gray-400 mt-1">Recomendado: 360x150px (Sidebar) ou 1200x150px (Topo)</span>
+                                <span className="text-[10px] text-gray-400 mt-1">Recomendado: 1200x150px (Desktop) ou 400x150px (Mobile)</span>
                             </div>
                         )}
                     </label>
@@ -321,22 +326,34 @@ const AdEditor = () => {
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
               <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
                 <Layout size={20} className="text-primary" />
-                Configurações
+                Local de Exibição
               </h3>
               
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Posição</label>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Selecione o Espaço (Slot)</label>
                 <select 
                   name="position"
                   value={formData.position}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 >
-                  <option value="sidebar">Barra Lateral (360x150)</option>
-                  <option value="home_top">Topo da Home (1200x150)</option>
-                  <option value="home_middle">Meio da Home (1000x150)</option>
-                  <option value="article_bottom">Fim de Artigo</option>
+                  <optgroup label="Global (Todas as Páginas)">
+                    <option value="top_large">Banner Topo Grande (Desktop)</option>
+                    <option value="top_large_mobile">Banner Topo Grande (Mobile)</option>
+                    <option value="sidebar_1">Banner Lateral 1</option>
+                    <option value="sidebar_2">Banner Lateral 2</option>
+                    <option value="sidebar_3">Banner Lateral 3</option>
+                    <option value="sidebar_4">Banner Lateral 4</option>
+                  </optgroup>
+                  <optgroup label="Apenas Home">
+                    <option value="home_middle_1">Banner Meio 1 (Acima Fornecedores)</option>
+                    <option value="home_middle_2">Banner Meio 2 (Acima Ebooks)</option>
+                    <option value="home_final">Banner Final (Acima Eventos)</option>
+                  </optgroup>
                 </select>
+                <p className="text-[10px] text-gray-500 mt-2">
+                    Cada espaço exibe apenas o anúncio mais recente marcado como "Ativo".
+                </p>
               </div>
 
               <div>

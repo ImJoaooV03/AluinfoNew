@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ebooks, sidebarAds } from '../data/mockData';
-import SectionHeader from '../components/SectionHeader';
-import NewsletterWidget from '../components/NewsletterWidget';
+import { ebooks } from '../data/mockData';
 import NewsCard from '../components/NewsCard';
-import { Search, TrendingUp, ChevronRight, BookOpen, Download } from 'lucide-react';
+import { Search, ChevronRight, BookOpen, Download } from 'lucide-react';
 import { NewsItem } from '../types';
+import AdSpot from '../components/AdSpot';
+import SidebarAds from '../components/SidebarAds';
 
 const Ebooks = () => {
   // Expand the list to simulate a full page of content
@@ -14,8 +14,6 @@ const Ebooks = () => {
     ...ebooks.map(item => ({ ...item, id: item.id + '_dup1' })),
     ...ebooks.map(item => ({ ...item, id: item.id + '_dup2' })).slice(0, 2)
   ];
-
-  const ads = sidebarAds || [];
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -37,13 +35,22 @@ const Ebooks = () => {
 
       <main className="container mx-auto px-4">
         
-        {/* Top Ad Banner - Standard for all pages */}
+        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
         <div className="w-full mb-8">
-            <div className="bg-gray-200 h-[150px] rounded flex items-center justify-center overflow-hidden shadow-sm">
-                <img 
-                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
-                  alt="MAGMA Engineering" 
-                  className="w-full h-full object-cover" 
+            {/* Desktop Version */}
+            <div className="hidden md:block">
+                <AdSpot 
+                    position="top_large" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                />
+            </div>
+            {/* Mobile Version */}
+            <div className="block md:hidden">
+                <AdSpot 
+                    position="top_large_mobile" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
@@ -93,43 +100,7 @@ const Ebooks = () => {
             </div>
 
             {/* Sidebar - Consistent with other pages */}
-            <aside className="lg:col-span-3 space-y-6">
-                
-                {/* LME Indicators Widget */}
-                <div className="w-full">
-                     <SectionHeader title="Indicadores LME" icon={<TrendingUp size={20} />} hasButton={false} />
-                     <div className="bg-white border border-gray-200 p-4 rounded-sm w-full shadow-sm">
-                        <div className="flex justify-between items-center mb-2">
-                            <div>
-                                <h4 className="font-bold text-gray-800 text-sm">ALUMÍNIO</h4>
-                                <span className="text-xs text-gray-500">AL</span>
-                            </div>
-                            <div className="text-right">
-                                <div className="font-bold text-gray-900 text-lg">$2868.00</div>
-                                <div className="text-[11px] text-green-600 font-bold">+1.40%</div>
-                            </div>
-                        </div>
-                        <div className="text-[10px] text-gray-400 mt-2 border-t border-gray-100 pt-2">
-                            1 de dezembro de 2025
-                        </div>
-                     </div>
-                </div>
-
-                {ads.map((ad, index) => (
-                    <React.Fragment key={ad.id}>
-                        {/* Insert Newsletter before the 3rd ad (index 2) */}
-                        {index === 2 && <NewsletterWidget />}
-                        
-                        <div className="bg-white border border-gray-200 p-1 rounded-sm shadow-sm">
-                            <img 
-                                src={ad.imageUrl} 
-                                alt={ad.alt} 
-                                className="w-full h-[150px] object-cover rounded-sm" 
-                            />
-                        </div>
-                    </React.Fragment>
-                ))}
-            </aside>
+            <SidebarAds />
 
         </div>
       </main>

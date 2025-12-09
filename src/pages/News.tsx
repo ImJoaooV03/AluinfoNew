@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { sidebarAds } from '../data/mockData';
 import NewsCard from '../components/NewsCard';
 import SectionHeader from '../components/SectionHeader';
-import NewsletterWidget from '../components/NewsletterWidget';
-import { Search, TrendingUp, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import AdSpot from '../components/AdSpot';
+import SidebarAds from '../components/SidebarAds';
+import { Search, ChevronRight, ChevronLeft, Loader2, Newspaper } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { NewsItem } from '../types';
 
@@ -48,7 +48,7 @@ const News = () => {
           category: item.category,
           date: new Date(item.publish_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
           author: item.author,
-          imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
+          imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
           isHighlight: item.is_highlight,
           type: 'news'
         }));
@@ -85,13 +85,22 @@ const News = () => {
 
       <main className="container mx-auto px-4">
         
-        {/* Top Ad Banner */}
+        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
         <div className="w-full mb-8">
-            <div className="bg-gray-200 h-[150px] rounded flex items-center justify-center overflow-hidden shadow-sm">
-                <img 
-                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
-                  alt="MAGMA Engineering" 
-                  className="w-full h-full object-cover" 
+            {/* Desktop Version */}
+            <div className="hidden md:block">
+                <AdSpot 
+                    position="top_large" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                />
+            </div>
+            {/* Mobile Version */}
+            <div className="block md:hidden">
+                <AdSpot 
+                    position="top_large_mobile" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
@@ -181,57 +190,8 @@ const News = () => {
 
             </div>
 
-            {/* Sidebar */}
-            <aside className="lg:col-span-3 space-y-6">
-                
-                {/* LME Indicators Widget */}
-                <div className="w-full">
-                     <SectionHeader title="Indicadores LME" icon={<TrendingUp size={20} />} hasButton={false} />
-                     <div className="bg-white border border-gray-200 p-4 rounded-sm w-full shadow-sm">
-                        <div className="flex justify-between items-center mb-2">
-                            <div>
-                                <h4 className="font-bold text-gray-800 text-sm">ALUMÍNIO</h4>
-                                <span className="text-xs text-gray-500">AL</span>
-                            </div>
-                            <div className="text-right">
-                                <div className="font-bold text-gray-900 text-lg">$2868.00</div>
-                                <div className="text-[11px] text-green-600 font-bold">+1.40%</div>
-                            </div>
-                        </div>
-                        <div className="text-[10px] text-gray-400 mt-2 border-t border-gray-100 pt-2">
-                            1 de dezembro de 2025
-                        </div>
-                     </div>
-                </div>
-
-                {sidebarAds.map((ad, index) => (
-                    <React.Fragment key={ad.id}>
-                        {index === 2 && <NewsletterWidget />}
-                        <div className="bg-white border border-gray-200 p-1 rounded-sm shadow-sm">
-                            <img 
-                                src={ad.imageUrl} 
-                                alt={ad.alt} 
-                                className="w-full h-[150px] object-cover rounded-sm" 
-                            />
-                        </div>
-                    </React.Fragment>
-                ))}
-                
-                {/* Most Read Widget */}
-                <div className="bg-white border border-gray-200 p-4 rounded-sm w-full">
-                     <h3 className="font-bold text-gray-800 border-b pb-2 mb-3 text-sm">Mais Lidas</h3>
-                     <ul className="space-y-3">
-                        {news.slice(0, 4).map((item, i) => (
-                            <li key={item.id} className="flex gap-3 items-start group cursor-pointer">
-                                <span className="text-2xl font-bold text-gray-200 leading-none group-hover:text-primary transition-colors">{i + 1}</span>
-                                <Link to={`/noticia/${item.id}`} className="text-xs text-gray-600 line-clamp-2 group-hover:text-gray-900">
-                                    {item.title}
-                                </Link>
-                            </li>
-                        ))}
-                     </ul>
-                </div>
-            </aside>
+            {/* Sidebar (Global) */}
+            <SidebarAds mostReadNews={news.slice(0, 4)} />
 
         </div>
       </main>

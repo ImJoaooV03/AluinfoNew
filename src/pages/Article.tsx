@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { sidebarAds } from '../data/mockData';
-import { Calendar, Clock, Share2, Facebook, Twitter, Linkedin, MessageCircle, ChevronRight, User, Loader2, AlertTriangle } from 'lucide-react';
+import { Calendar, Clock, Share2, Facebook, Twitter, Linkedin, MessageCircle, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
 import SectionHeader from '../components/SectionHeader';
-import NewsletterWidget from '../components/NewsletterWidget';
 import RelatedNewsCarousel from '../components/RelatedNewsCarousel';
+import AdSpot from '../components/AdSpot';
+import SidebarAds from '../components/SidebarAds';
 import { supabase } from '../lib/supabaseClient';
 import { Article as ArticleType, NewsItem } from '../types';
 
@@ -50,7 +50,7 @@ const Article = () => {
           authorRole: 'Colaborador', // Default fallback
           authorAvatar: '', // Default fallback
           readTime: '5 min de leitura', // Mock calculation
-          imageUrl: data.image_url || 'https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x600?text=Sem+Imagem',
+          imageUrl: data.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x600?text=Sem+Imagem',
           tags: [data.category],
           type: 'news'
         };
@@ -85,7 +85,7 @@ const Article = () => {
           category: item.category,
           date: new Date(item.publish_date).toLocaleDateString('pt-BR'),
           author: item.author,
-          imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400',
+          imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400',
           isHighlight: false,
           type: 'news'
         }));
@@ -135,13 +135,22 @@ const Article = () => {
 
       <main className="container mx-auto px-4 py-8">
         
-        {/* Top Ad Banner */}
+        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
         <div className="w-full mb-8">
-            <div className="bg-gray-200 h-[150px] rounded flex items-center justify-center overflow-hidden shadow-sm">
-                <img 
-                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
-                  alt="MAGMA Engineering" 
-                  className="w-full h-full object-cover" 
+            {/* Desktop Version */}
+            <div className="hidden md:block">
+                <AdSpot 
+                    position="top_large" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                />
+            </div>
+            {/* Mobile Version */}
+            <div className="block md:hidden">
+                <AdSpot 
+                    position="top_large_mobile" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
@@ -199,11 +208,11 @@ const Article = () => {
                 </header>
 
                 {/* Hero Image */}
-                <div className="w-full h-64 md:h-[500px] relative">
+                <div className="w-full h-auto relative">
                     <img 
                         src={article.imageUrl} 
                         alt={article.title} 
-                        className="w-full h-full object-cover"
+                        className="w-full h-auto object-cover max-h-[600px]"
                     />
                 </div>
 
@@ -266,33 +275,8 @@ const Article = () => {
 
             </article>
 
-            {/* Sidebar Column */}
-            <aside className="lg:col-span-3 space-y-6">
-                {/* Author Widget */}
-                <div className="bg-white border border-gray-200 p-6 rounded-sm text-center w-full">
-                    <div className="w-20 h-20 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-2xl border border-gray-300 mb-3">
-                         {article.author?.charAt(0).toUpperCase()}
-                    </div>
-                    <h3 className="font-bold text-gray-900">{article.author}</h3>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-4">{article.authorRole}</p>
-                    <button className="text-xs font-bold text-primary border border-primary px-4 py-2 rounded hover:bg-primary hover:text-white transition-colors w-full">
-                        Ver Perfil
-                    </button>
-                </div>
-
-                {sidebarAds.map((ad, index) => (
-                    <React.Fragment key={ad.id}>
-                        {index === 2 && <NewsletterWidget />}
-                        <div className="bg-white border border-gray-200 p-1 rounded-sm shadow-sm">
-                            <img 
-                                src={ad.imageUrl} 
-                                alt={ad.alt} 
-                                className="w-full h-[150px] object-cover rounded-sm" 
-                            />
-                        </div>
-                    </React.Fragment>
-                ))}
-            </aside>
+            {/* Sidebar (Global) */}
+            <SidebarAds mostReadNews={relatedNews.slice(0, 4)} />
 
         </div>
       </main>

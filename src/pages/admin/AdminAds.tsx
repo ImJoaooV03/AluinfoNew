@@ -15,6 +15,7 @@ interface Ad {
   image_url: string;
   client_name?: string;
   end_date?: string;
+  display_order: number;
 }
 
 const AdminAds = () => {
@@ -34,17 +35,13 @@ const AdminAds = () => {
     setError(null);
     
     try {
-      // Verificação de conexão básica antes da query
       const { data, error } = await supabase
         .from('ads')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('position', { ascending: true })
+        .order('created_at', { ascending: false }); // Mostra os mais recentes primeiro
 
       if (error) {
-        // Tratamento específico para tabela inexistente (PGRST205)
-        if (error.code === 'PGRST205' || error.message.includes('does not exist')) {
-          throw new Error('A tabela de anúncios não foi encontrada no banco de dados. Por favor, execute o script de migração.');
-        }
         throw error;
       }
 
@@ -53,17 +50,7 @@ const AdminAds = () => {
       }
     } catch (err: any) {
       console.error('Erro crítico ao buscar anúncios:', err);
-      
-      // Mensagem amigável para o usuário
-      let errorMessage = 'Falha ao carregar os anúncios.';
-      
-      if (err.message?.includes('fetch')) {
-        errorMessage = 'Erro de conexão. Verifique sua internet.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
+      setError(err.message || 'Falha ao carregar os anúncios.');
     } finally {
       setLoading(false);
     }
@@ -96,10 +83,15 @@ const AdminAds = () => {
 
   const getPositionLabel = (pos: string) => {
     const map: Record<string, string> = {
-      'sidebar': 'Barra Lateral',
-      'home_top': 'Topo da Home',
-      'home_middle': 'Meio da Home',
-      'article_bottom': 'Fim de Artigo'
+      'top_large': 'Banner Topo Grande',
+      'top_large_mobile': 'Banner Topo Grande - Mobile',
+      'home_middle_1': 'Banner Meio 1',
+      'home_middle_2': 'Banner Meio 2',
+      'home_final': 'Banner Final',
+      'sidebar_1': 'Banner Lateral 1',
+      'sidebar_2': 'Banner Lateral 2',
+      'sidebar_3': 'Banner Lateral 3',
+      'sidebar_4': 'Banner Lateral 4',
     };
     return map[pos] || pos;
   };
@@ -127,11 +119,6 @@ const AdminAds = () => {
                 <div>
                     <h3 className="text-sm font-bold text-red-800">Erro ao carregar dados</h3>
                     <p className="text-sm text-red-700 mt-1">{error}</p>
-                    {error.includes('tabela') && (
-                        <p className="text-xs text-red-600 mt-2 font-mono bg-red-100 p-2 rounded border border-red-200">
-                            SQL Necessário: Execute 'supabase/migrations/20250215_create_ads_table_v2.sql'
-                        </p>
-                    )}
                 </div>
             </div>
             <button 
@@ -178,7 +165,7 @@ const AdminAds = () => {
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-200">
                 <th className="px-6 py-4">Campanha / Banner</th>
-                <th className="px-6 py-4">Posição</th>
+                <th className="px-6 py-4">Posição (Slot)</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Desempenho</th>
                 <th className="px-6 py-4">Vencimento</th>
@@ -195,7 +182,7 @@ const AdminAds = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredAds.length === 0 && !error ? (
+              ) : filteredAds.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-2">
@@ -208,12 +195,6 @@ const AdminAds = () => {
                             Criar primeira campanha
                         </button>
                     </div>
-                  </td>
-                </tr>
-              ) : filteredAds.length === 0 && error ? (
-                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    Não foi possível carregar a lista. Verifique o erro acima.
                   </td>
                 </tr>
               ) : (

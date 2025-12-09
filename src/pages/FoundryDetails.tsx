@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { foundries } from '../data/mockData';
 import { ChevronRight, MapPin, Phone, Mail, Globe, CheckCircle, Layers, Settings, ShieldCheck, Star, ExternalLink, Factory, Image as ImageIcon } from 'lucide-react';
 import clsx from 'clsx';
+import AdSpot from '../components/AdSpot';
 
 const FoundryDetails = () => {
   const { id } = useParams();
@@ -45,13 +46,22 @@ const FoundryDetails = () => {
 
       <main className="container mx-auto px-4">
         
-        {/* Top Ad Banner - 100% Width */}
+        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
         <div className="w-full mb-8">
-            <div className="bg-gray-200 h-[150px] rounded flex items-center justify-center overflow-hidden shadow-sm">
-                <img 
-                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
-                  alt="MAGMA Engineering" 
-                  className="w-full h-full object-cover" 
+            {/* Desktop Version */}
+            <div className="hidden md:block">
+                <AdSpot 
+                    position="top_large" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                />
+            </div>
+            {/* Mobile Version */}
+            <div className="block md:hidden">
+                <AdSpot 
+                    position="top_large_mobile" 
+                    className="w-full bg-gray-200"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
