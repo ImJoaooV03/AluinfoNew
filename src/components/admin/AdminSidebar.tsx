@@ -1,6 +1,7 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, FileText, Settings, LogOut, Package, Megaphone } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 import clsx from 'clsx';
 
 interface AdminSidebarProps {
@@ -10,6 +11,16 @@ interface AdminSidebarProps {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/admin/login');
+    } catch (error) {
+      console.error('Erro ao sair:', error);
+    }
+  };
 
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/admin' },
@@ -70,7 +81,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-gray-100">
-          <button className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
+          >
             <LogOut size={20} />
             Sair do Sistema
           </button>

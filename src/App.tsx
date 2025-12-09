@@ -14,13 +14,16 @@ import FoundryDetails from './pages/FoundryDetails';
 import Advertise from './pages/Advertise';
 
 // Admin Pages
+import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminContent from './pages/admin/AdminContent';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Wrapper to conditionally render Header/Footer based on route
 const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  // Hide public header/footer on admin routes, including login
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
@@ -54,9 +57,25 @@ function App() {
           <Route path="/anuncie" element={<Advertise />} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<Dashboard />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/content" element={<AdminContent />} />
+          <Route path="/admin/login" element={<Login />} />
+          
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/users" element={
+            <ProtectedRoute>
+              <AdminUsers />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/content" element={
+            <ProtectedRoute>
+              <AdminContent />
+            </ProtectedRoute>
+          } />
         </Routes>
       </LayoutWrapper>
     </Router>
