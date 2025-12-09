@@ -18,6 +18,13 @@ import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminContent from './pages/admin/AdminContent';
+import NewsEditor from './pages/admin/NewsEditor';
+import AdminSuppliers from './pages/admin/AdminSuppliers';
+import SupplierEditor from './pages/admin/SupplierEditor';
+import AdminFoundries from './pages/admin/AdminFoundries';
+import FoundryEditor from './pages/admin/FoundryEditor';
+import AdminAds from './pages/admin/AdminAds'; // Import AdminAds
+import AdEditor from './pages/admin/AdEditor'; // Import AdEditor
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Wrapper to conditionally render Header/Footer based on route
@@ -76,6 +83,76 @@ function App() {
               <AdminContent />
             </ProtectedRoute>
           } />
+
+          <Route path="/admin/content/new" element={
+            <ProtectedRoute>
+              <NewsEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/content/edit/:id" element={
+            <ProtectedRoute>
+              <NewsEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Suppliers Routes */}
+          <Route path="/admin/suppliers" element={
+            <ProtectedRoute>
+              <AdminSuppliers />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/suppliers/new" element={
+            <ProtectedRoute>
+              <SupplierEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/suppliers/edit/:id" element={
+            <ProtectedRoute>
+              <SupplierEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Foundries Routes */}
+          <Route path="/admin/foundries" element={
+            <ProtectedRoute>
+              <AdminFoundries />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/foundries/new" element={
+            <ProtectedRoute>
+              <FoundryEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/foundries/edit/:id" element={
+            <ProtectedRoute>
+              <FoundryEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Ads Routes */}
+          <Route path="/admin/ads" element={
+            <ProtectedRoute>
+              <AdminAds />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/ads/new" element={
+            <ProtectedRoute>
+              <AdEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/ads/edit/:id" element={
+            <ProtectedRoute>
+              <AdEditor />
+            </ProtectedRoute>
+          } />
+
         </Routes>
       </LayoutWrapper>
     </Router>

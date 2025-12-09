@@ -1,20 +1,121 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { currentArticle, sidebarAds, mainNews } from '../data/mockData';
-import { Calendar, Clock, Share2, Facebook, Twitter, Linkedin, MessageCircle, ChevronRight, User } from 'lucide-react';
+import { sidebarAds } from '../data/mockData';
+import { Calendar, Clock, Share2, Facebook, Twitter, Linkedin, MessageCircle, ChevronRight, User, Loader2, AlertTriangle } from 'lucide-react';
 import SectionHeader from '../components/SectionHeader';
 import NewsletterWidget from '../components/NewsletterWidget';
 import RelatedNewsCarousel from '../components/RelatedNewsCarousel';
+import { supabase } from '../lib/supabaseClient';
+import { Article as ArticleType, NewsItem } from '../types';
 
 const Article = () => {
   const { id } = useParams();
+  const [article, setArticle] = useState<ArticleType | null>(null);
+  const [relatedNews, setRelatedNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Scroll to top on load
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (id) {
+      fetchArticle(id);
+    }
   }, [id]);
 
-  const article = currentArticle; // In a real app, fetch based on ID
+  const fetchArticle = async (articleId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch article
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .eq('id', articleId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        // Map DB data to Article type
+        const mappedArticle: ArticleType = {
+          id: data.id,
+          title: data.title,
+          subtitle: data.subtitle,
+          summary: data.summary,
+          content: data.content,
+          category: data.category,
+          date: new Date(data.publish_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }),
+          author: data.author,
+          authorRole: 'Colaborador', // Default fallback
+          authorAvatar: '', // Default fallback
+          readTime: '5 min de leitura', // Mock calculation
+          imageUrl: data.image_url || 'https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x600?text=Sem+Imagem',
+          tags: [data.category],
+          type: 'news'
+        };
+        setArticle(mappedArticle);
+
+        // Fetch related news (same category, excluding current)
+        fetchRelatedNews(data.category, data.id);
+      }
+    } catch (err: any) {
+      console.error('Erro ao buscar notícia:', err);
+      setError('Não foi possível carregar a notícia. Ela pode ter sido removida ou não existir.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRelatedNews = async (category: string, currentId: string) => {
+    try {
+      const { data } = await supabase
+        .from('news')
+        .select('*')
+        .eq('category', category)
+        .eq('status', 'published')
+        .neq('id', currentId)
+        .limit(6);
+
+      if (data) {
+        const mappedRelated = data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          summary: item.summary,
+          category: item.category,
+          date: new Date(item.publish_date).toLocaleDateString('pt-BR'),
+          author: item.author,
+          imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400',
+          isHighlight: false,
+          type: 'news'
+        }));
+        setRelatedNews(mappedRelated);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar relacionadas:', err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
+
+  if (error || !article) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] p-4">
+        <AlertTriangle className="text-yellow-500 mb-4" size={48} />
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Ops! Algo deu errado.</h1>
+        <p className="text-gray-600 mb-6">{error || 'Notícia não encontrada.'}</p>
+        <Link to="/noticias" className="bg-primary text-white px-6 py-2 rounded-md font-bold hover:bg-primary-hover transition-colors">
+          Voltar para Notícias
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-12">
@@ -25,7 +126,7 @@ const Article = () => {
             <div className="flex items-center gap-2 text-xs text-gray-500 overflow-x-auto whitespace-nowrap">
                 <Link to="/" className="hover:text-primary transition-colors">Início</Link>
                 <ChevronRight size={12} />
-                <Link to="/" className="hover:text-primary transition-colors uppercase">{article.category}</Link>
+                <Link to="/noticias" className="hover:text-primary transition-colors uppercase">Notícias</Link>
                 <ChevronRight size={12} />
                 <span className="text-gray-800 font-medium truncate">{article.title}</span>
             </div>
@@ -34,11 +135,11 @@ const Article = () => {
 
       <main className="container mx-auto px-4 py-8">
         
-        {/* Top Ad Banner - Matches Home & News Page */}
+        {/* Top Ad Banner */}
         <div className="w-full mb-8">
             <div className="bg-gray-200 h-[150px] rounded flex items-center justify-center overflow-hidden shadow-sm">
                 <img 
-                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
+                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
                   alt="MAGMA Engineering" 
                   className="w-full h-full object-cover" 
                 />
@@ -75,13 +176,9 @@ const Article = () => {
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-6 border-t border-gray-100 mt-6">
                         <div className="flex items-center gap-3">
-                            {article.authorAvatar ? (
-                                <img src={article.authorAvatar} alt={article.author} className="w-10 h-10 rounded-full object-cover" />
-                            ) : (
-                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                                    <User size={20} />
-                                </div>
-                            )}
+                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border border-gray-300">
+                                {article.author?.charAt(0).toUpperCase()}
+                            </div>
                             <div>
                                 <div className="text-sm font-bold text-gray-900">{article.author}</div>
                                 <div className="text-xs text-gray-500">{article.authorRole}</div>
@@ -158,12 +255,14 @@ const Article = () => {
                 </div>
 
                 {/* Related News Carousel */}
-                <div className="bg-gray-50 border-t border-gray-200 p-6 md:p-10">
-                    <SectionHeader title="Notícias Relacionadas" />
-                    <div className="mt-4">
-                        <RelatedNewsCarousel items={mainNews} />
+                {relatedNews.length > 0 && (
+                    <div className="bg-gray-50 border-t border-gray-200 p-6 md:p-10">
+                        <SectionHeader title="Notícias Relacionadas" />
+                        <div className="mt-4">
+                            <RelatedNewsCarousel items={relatedNews} />
+                        </div>
                     </div>
-                </div>
+                )}
 
             </article>
 
@@ -171,8 +270,8 @@ const Article = () => {
             <aside className="lg:col-span-3 space-y-6">
                 {/* Author Widget */}
                 <div className="bg-white border border-gray-200 p-6 rounded-sm text-center w-full">
-                    <div className="w-20 h-20 mx-auto rounded-full overflow-hidden mb-3">
-                         <img src={article.authorAvatar} alt={article.author} className="w-full h-full object-cover" />
+                    <div className="w-20 h-20 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-2xl border border-gray-300 mb-3">
+                         {article.author?.charAt(0).toUpperCase()}
                     </div>
                     <h3 className="font-bold text-gray-900">{article.author}</h3>
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-4">{article.authorRole}</p>
@@ -183,9 +282,7 @@ const Article = () => {
 
                 {sidebarAds.map((ad, index) => (
                     <React.Fragment key={ad.id}>
-                        {/* Insert Newsletter before the 3rd ad (index 2) which is AluInfo Ads */}
                         {index === 2 && <NewsletterWidget />}
-                        
                         <div className="bg-white border border-gray-200 p-1 rounded-sm shadow-sm">
                             <img 
                                 src={ad.imageUrl} 
@@ -195,21 +292,6 @@ const Article = () => {
                         </div>
                     </React.Fragment>
                 ))}
-                
-                {/* Most Read Widget */}
-                <div className="bg-white border border-gray-200 p-4 rounded-sm w-full">
-                     <h3 className="font-bold text-gray-800 border-b pb-2 mb-3 text-sm">Mais Lidas</h3>
-                     <ul className="space-y-3">
-                        {[1, 2, 3, 4].map(i => (
-                            <li key={i} className="flex gap-3 items-start group cursor-pointer">
-                                <span className="text-2xl font-bold text-gray-200 leading-none group-hover:text-primary transition-colors">{i}</span>
-                                <p className="text-xs text-gray-600 line-clamp-2 group-hover:text-gray-900">
-                                    Tendências do mercado de alumínio para o próximo semestre mostram crescimento...
-                                </p>
-                            </li>
-                        ))}
-                     </ul>
-                </div>
             </aside>
 
         </div>

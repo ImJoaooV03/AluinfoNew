@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import NewsCard from '../components/NewsCard';
 import SectionHeader from '../components/SectionHeader';
@@ -6,24 +6,72 @@ import HeroCarousel from '../components/HeroCarousel';
 import NewsletterWidget from '../components/NewsletterWidget';
 import SupplierCard from '../components/SupplierCard';
 import FoundryCard from '../components/FoundryCard';
-import { mainNews, technicalMaterials, ebooks, events, sidebarAds, suppliers, foundries } from '../data/mockData';
-import { Wrench, Book, Calendar, TrendingUp, Users, Factory } from 'lucide-react';
+import { technicalMaterials, ebooks, events, sidebarAds, suppliers, foundries } from '../data/mockData';
+import { Wrench, Book, Calendar, TrendingUp, Users, Factory, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+import { NewsItem } from '../types';
 
 const Home = () => {
-  // Slice data for the mixed grid layout
-  const highlightNews = mainNews.slice(0, 2);
-  const secondaryNews = mainNews.slice(2, 6);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter verified suppliers for the new section - Limit changed to 3
+  // Fetch News from Supabase
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('news')
+          .select('*')
+          .eq('status', 'published') // Apenas notícias publicadas
+          .order('publish_date', { ascending: false }) // Mais recentes primeiro
+          .limit(6); // Limite para a Home
+
+        if (error) throw error;
+
+        if (data) {
+          // Mapear dados do banco (snake_case) para o frontend (camelCase)
+          const mappedNews: NewsItem[] = data.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            summary: item.summary,
+            category: item.category,
+            date: new Date(item.publish_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
+            author: item.author,
+            imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
+            isHighlight: item.is_highlight,
+            type: 'news'
+          }));
+          setNews(mappedNews);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar notícias:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
+  // Slice data for the mixed grid layout based on fetched data
+  const highlightNews = news.slice(0, 2);
+  const secondaryNews = news.slice(2, 6);
+
+  // Filter verified suppliers/foundries (Mantendo mock por enquanto, mas preparado para DB)
   const verifiedSuppliers = suppliers.filter(s => s.isVerified).slice(0, 3);
-
-  // Filter verified foundries, reverse to get "latest" (assuming array order), and slice 3
-  const verifiedFoundries = foundries
-    .filter(f => f.isVerified)
-    .slice(0, 3); // Taking first 3 verified for display
-
-  // Slice technical materials to show only the latest 3
+  const verifiedFoundries = foundries.filter(f => f.isVerified).slice(0, 3);
   const latestTechnicalMaterials = technicalMaterials.slice(0, 3);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="animate-spin text-primary" size={32} />
+          <span className="text-sm text-gray-500">Carregando portal...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -32,11 +80,11 @@ const Home = () => {
 
       <main className="container mx-auto px-4 py-8">
         
-        {/* Top Ad Banners - Single Full Width Banner with 150px height */}
+        {/* Top Ad Banners */}
         <div className="w-full mb-8">
             <div className="bg-gray-200 h-[150px] rounded flex items-center justify-center overflow-hidden shadow-sm">
                 <img 
-                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
+                  src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" 
                   alt="MAGMA Engineering" 
                   className="w-full h-full object-cover" 
                 />
@@ -52,28 +100,36 @@ const Home = () => {
                 <section>
                     <SectionHeader title="Últimas Notícias" />
                     
-                    {/* Top Row: 2 Large Highlights */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        {highlightNews.map(news => (
-                            <Link to={`/noticia/${news.id}`} key={news.id} className="block h-full">
-                                <NewsCard item={news} variant="highlight" />
-                            </Link>
-                        ))}
-                    </div>
+                    {news.length > 0 ? (
+                      <>
+                        {/* Top Row: 2 Large Highlights */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            {highlightNews.map(item => (
+                                <Link to={`/noticia/${item.id}`} key={item.id} className="block h-full">
+                                    <NewsCard item={item} variant="highlight" />
+                                </Link>
+                            ))}
+                        </div>
 
-                    {/* Bottom Row: 4 Smaller Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {secondaryNews.map(news => (
-                            <Link to={`/noticia/${news.id}`} key={news.id} className="block h-full">
-                                <NewsCard item={news} variant="compact" />
-                            </Link>
-                        ))}
-                    </div>
+                        {/* Bottom Row: 4 Smaller Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {secondaryNews.map(item => (
+                                <Link to={`/noticia/${item.id}`} key={item.id} className="block h-full">
+                                    <NewsCard item={item} variant="compact" />
+                                </Link>
+                            ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-10 bg-white border border-gray-200 rounded-sm">
+                        <p className="text-gray-500">Nenhuma notícia publicada no momento.</p>
+                      </div>
+                    )}
                 </section>
 
                 {/* Banner Middle */}
                 <div className="w-full h-[150px] bg-gray-300 rounded overflow-hidden">
-                     <img src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/555555/ffffff?text=WALBERT+Modelacao+e+Ferramentaria" className="w-full h-full object-cover" />
+                     <img src="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/555555/ffffff?text=WALBERT+Modelacao+e+Ferramentaria" className="w-full h-full object-cover" />
                 </div>
 
                 {/* Verified Suppliers Section */}
@@ -86,7 +142,7 @@ const Home = () => {
                     </div>
                 </section>
 
-                {/* Verified Foundries Section - NEW */}
+                {/* Verified Foundries Section */}
                 <section>
                     <SectionHeader title="Fundições em Destaque" icon={<Factory size={20} />} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -183,12 +239,12 @@ const Home = () => {
                 <div className="bg-white border border-gray-200 p-4 rounded-sm w-full">
                      <h3 className="font-bold text-gray-800 border-b pb-2 mb-3 text-sm">Mais Lidas</h3>
                      <ul className="space-y-3">
-                        {[1, 2, 3, 4].map(i => (
-                            <li key={i} className="flex gap-3 items-start group cursor-pointer">
-                                <span className="text-2xl font-bold text-gray-200 leading-none group-hover:text-primary transition-colors">{i}</span>
-                                <p className="text-xs text-gray-600 line-clamp-2 group-hover:text-gray-900">
-                                    Tendências do mercado de alumínio para o próximo semestre mostram crescimento...
-                                </p>
+                        {news.slice(0, 4).map((item, i) => (
+                            <li key={item.id} className="flex gap-3 items-start group cursor-pointer">
+                                <span className="text-2xl font-bold text-gray-200 leading-none group-hover:text-primary transition-colors">{i + 1}</span>
+                                <Link to={`/noticia/${item.id}`} className="text-xs text-gray-600 line-clamp-2 group-hover:text-gray-900">
+                                    {item.title}
+                                </Link>
                             </li>
                         ))}
                      </ul>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Search, Filter, Edit, Trash2, UserPlus, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Search, Filter, Edit, Trash2, UserPlus, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
 // Interface matching the Supabase profiles table structure + some UI helpers
@@ -22,6 +22,7 @@ const AdminUsers = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -30,18 +31,26 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       if (data) {
-        // Map DB data to UI structure if needed, or use as is
         setUsers(data as Profile[]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar usuários:', error);
+      // Tratamento específico para erro de recursão
+      if (error.code === '42P17') {
+        setError('Erro de configuração no banco de dados (Recursão Infinita). Por favor, execute o script de correção SQL no Supabase.');
+      } else {
+        setError(error.message || 'Falha ao carregar usuários.');
+      }
     } finally {
       setLoading(false);
     }
@@ -69,6 +78,21 @@ const AdminUsers = () => {
           Novo Usuário
         </button>
       </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-sm flex items-start gap-3">
+            <AlertTriangle className="text-red-500 flex-shrink-0 mt-0.5" size={18} />
+            <div>
+                <h3 className="text-sm font-bold text-red-800">Erro ao carregar dados</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                {error.includes('Recursão') && (
+                    <p className="text-xs text-red-600 mt-2 font-mono bg-red-100 p-2 rounded">
+                        Dica: Copie o conteúdo de 'supabase/migrations/20250215_fix_recursion.sql' e execute no SQL Editor do Supabase.
+                    </p>
+                )}
+            </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* Toolbar */}
@@ -125,7 +149,7 @@ const AdminUsers = () => {
               ) : filteredUsers.length === 0 ? (
                  <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    Nenhum usuário encontrado.
+                    {error ? 'Não foi possível exibir os usuários.' : 'Nenhum usuário encontrado.'}
                   </td>
                 </tr>
               ) : (
@@ -158,7 +182,6 @@ const AdminUsers = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5">
-                        {/* Assuming active for now as we don't have status in profiles yet */}
                         <CheckCircle size={14} className="text-green-500" />
                         <span className="text-sm font-medium text-green-700">
                           Ativo

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, LogOut, Package, Megaphone } from 'lucide-react';
+import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import clsx from 'clsx';
 
@@ -25,8 +25,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/admin' },
     { icon: <Users size={20} />, label: 'Usuários', path: '/admin/users' },
-    { icon: <FileText size={20} />, label: 'Conteúdo', path: '/admin/content' },
+    { icon: <Newspaper size={20} />, label: 'Notícias', path: '/admin/content' }, // Alterado ícone e label
     { icon: <Package size={20} />, label: 'Fornecedores', path: '/admin/suppliers' },
+    { icon: <Factory size={20} />, label: 'Fundições', path: '/admin/foundries' },
     { icon: <Megaphone size={20} />, label: 'Publicidade', path: '/admin/ads' },
     { icon: <Settings size={20} />, label: 'Configurações', path: '/admin/settings' },
   ];
@@ -59,7 +60,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            // Check if current path starts with item path (for sub-routes like /admin/content/new)
+            // Exception for dashboard which is exact match
+            const isActive = item.path === '/admin' 
+              ? location.pathname === '/admin'
+              : location.pathname.startsWith(item.path);
+
             return (
               <Link
                 key={item.path}
