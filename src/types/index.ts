@@ -11,6 +11,7 @@ export interface NewsItem {
   pages?: number;
   location?: string;
   type?: 'news' | 'technical' | 'ebook' | 'event';
+  fileUrl?: string; // Novo campo para o link do arquivo (PDF/Doc)
 }
 
 export interface AdBanner {

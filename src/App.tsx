@@ -23,8 +23,11 @@ import AdminSuppliers from './pages/admin/AdminSuppliers';
 import SupplierEditor from './pages/admin/SupplierEditor';
 import AdminFoundries from './pages/admin/AdminFoundries';
 import FoundryEditor from './pages/admin/FoundryEditor';
-import AdminAds from './pages/admin/AdminAds'; // Import AdminAds
-import AdEditor from './pages/admin/AdEditor'; // Import AdEditor
+import AdminAds from './pages/admin/AdminAds'; 
+import AdEditor from './pages/admin/AdEditor';
+import AdminTechnicalMaterials from './pages/admin/AdminTechnicalMaterials';
+import TechnicalMaterialEditor from './pages/admin/TechnicalMaterialEditor';
+import AdminLeads from './pages/admin/AdminLeads'; // Novo
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Wrapper to conditionally render Header/Footer based on route
@@ -93,6 +96,32 @@ function App() {
           <Route path="/admin/content/edit/:id" element={
             <ProtectedRoute>
               <NewsEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Technical Materials Routes */}
+          <Route path="/admin/materials" element={
+            <ProtectedRoute>
+              <AdminTechnicalMaterials />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/materials/new" element={
+            <ProtectedRoute>
+              <TechnicalMaterialEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/materials/edit/:id" element={
+            <ProtectedRoute>
+              <TechnicalMaterialEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Leads Route (Novo) */}
+          <Route path="/admin/leads" element={
+            <ProtectedRoute>
+              <AdminLeads />
             </ProtectedRoute>
           } />
 

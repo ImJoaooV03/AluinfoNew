@@ -7,7 +7,8 @@ interface AdminHeaderProps {
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ onMenuClick }) => {
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
+    // Removido 'sticky top-0 z-30' pois o layout pai já gerencia o posicionamento
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
       <div className="flex items-center gap-4">
         <button 
           onClick={onMenuClick}
