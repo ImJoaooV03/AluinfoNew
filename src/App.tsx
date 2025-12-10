@@ -35,7 +35,10 @@ import EbookEditor from './pages/admin/EbookEditor';
 import AdminEvents from './pages/admin/AdminEvents';
 import EventEditor from './pages/admin/EventEditor';
 import AdminSettings from './pages/admin/AdminSettings';
-import AdminMediaKit from './pages/admin/AdminMediaKit'; // Nova Importação
+import AdminMediaKit from './pages/admin/AdminMediaKit';
+import AdminHeroCarousel from './pages/admin/AdminHeroCarousel';
+import HeroSlideEditor from './pages/admin/HeroSlideEditor';
+import AdminCategories from './pages/admin/AdminCategories'; // Novo
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Wrapper to conditionally render Header/Footer based on route
@@ -106,6 +109,25 @@ function App() {
           <Route path="/admin/content/edit/:id" element={
             <ProtectedRoute>
               <NewsEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Hero Carousel Routes */}
+          <Route path="/admin/hero" element={
+            <ProtectedRoute>
+              <AdminHeroCarousel />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/hero/new" element={
+            <ProtectedRoute>
+              <HeroSlideEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/hero/edit/:id" element={
+            <ProtectedRoute>
+              <HeroSlideEditor />
             </ProtectedRoute>
           } />
 
@@ -230,10 +252,17 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* Admin Media Kit Route (NOVO) */}
+          {/* Admin Media Kit Route */}
           <Route path="/admin/media-kit" element={
             <ProtectedRoute>
               <AdminMediaKit />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Categories Route (NOVO) */}
+          <Route path="/admin/categories" element={
+            <ProtectedRoute>
+              <AdminCategories />
             </ProtectedRoute>
           } />
 

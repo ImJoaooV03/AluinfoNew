@@ -4,11 +4,13 @@ import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Save, ArrowLeft, Loader2, AlertCircle, Book, UploadCloud, Image as ImageIcon, Trash2, FileText, DollarSign, User } from 'lucide-react';
 import clsx from 'clsx';
+import { useCategories } from '../../hooks/useCategories';
 
 const EbookEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const { categories, loading: categoriesLoading } = useCategories('ebook');
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -21,7 +23,7 @@ const EbookEditor = () => {
     author: '',
     price: 0,
     description: '',
-    category: 'Técnico',
+    category: '',
     file_url: '',
     cover_url: '',
     status: 'draft',
@@ -33,6 +35,12 @@ const EbookEditor = () => {
       fetchEbook();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!isEditing && !formData.category && categories.length > 0) {
+      setFormData(prev => ({ ...prev, category: categories[0].name }));
+    }
+  }, [categories, isEditing, formData.category]);
 
   const fetchEbook = async () => {
     try {
@@ -50,7 +58,7 @@ const EbookEditor = () => {
           author: data.author || '',
           price: data.price || 0,
           description: data.description || '',
-          category: data.category || 'Técnico',
+          category: data.category || '',
           file_url: data.file_url || '',
           cover_url: data.cover_url || '',
           status: data.status || 'draft',
@@ -351,12 +359,12 @@ const EbookEditor = () => {
                   value={formData.category}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  disabled={categoriesLoading}
                 >
-                  <option value="Técnico">Técnico</option>
-                  <option value="Gestão">Gestão</option>
-                  <option value="Mercado">Mercado</option>
-                  <option value="Inovação">Inovação</option>
-                  <option value="Outros">Outros</option>
+                  <option value="">Selecione...</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

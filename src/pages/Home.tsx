@@ -248,7 +248,7 @@ const Home = () => {
                 <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" />
             </div>
             <div className="block md:hidden">
-                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile" />
+                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile" />
             </div>
         </div>
 
@@ -257,7 +257,7 @@ const Home = () => {
                 
                 {/* Notícias */}
                 <section>
-                    <SectionHeader title="Últimas Notícias" />
+                    <SectionHeader title="Últimas Notícias" linkTo="/noticias" />
                     {news.length > 0 ? (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -286,7 +286,7 @@ const Home = () => {
 
                 {/* Fornecedores em Destaque (Reais) */}
                 <section>
-                    <SectionHeader title="Fornecedores em Destaque" icon={<Users size={20} />} />
+                    <SectionHeader title="Fornecedores em Destaque" icon={<Users size={20} />} linkTo="/fornecedores" />
                     {homeSuppliers.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {homeSuppliers.map(supplier => (
@@ -302,7 +302,7 @@ const Home = () => {
 
                 {/* Fundições em Destaque (Reais) */}
                 <section>
-                    <SectionHeader title="Fundições em Destaque" icon={<Factory size={20} />} />
+                    <SectionHeader title="Fundições em Destaque" icon={<Factory size={20} />} linkTo="/fundicoes" />
                     {homeFoundries.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {homeFoundries.map(foundry => (
@@ -318,7 +318,7 @@ const Home = () => {
 
                 {/* Materiais Técnicos com Popup */}
                 <section>
-                    <SectionHeader title="Materiais Técnicos" icon={<Wrench size={20} />} />
+                    <SectionHeader title="Materiais Técnicos" icon={<Wrench size={20} />} linkTo="/artigos-tecnicos" />
                     {techMaterials.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {techMaterials.map(item => (
@@ -337,11 +337,11 @@ const Home = () => {
                     )}
                 </section>
 
-                <AdSpot position="home_middle_2" className="w-full bg-amber-100" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Automatic" />
+                <AdSpot position="home_middle_2" className="w-full bg-amber-100" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Automatic" />
 
                 {/* E-books com Popup */}
                 <section>
-                    <SectionHeader title="E-books" icon={<Book size={20} />} />
+                    <SectionHeader title="E-books" icon={<Book size={20} />} linkTo="/ebooks" />
                     {homeEbooks.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {homeEbooks.map(item => (
@@ -360,11 +360,11 @@ const Home = () => {
                     )}
                 </section>
 
-                <AdSpot position="home_final" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Sua+Empresa+Com..." />
+                <AdSpot position="home_final" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Sua+Empresa+Com..." />
 
                 {/* Eventos (Reais) */}
                 <section>
-                    <SectionHeader title="Eventos" icon={<Calendar size={20} />} />
+                    <SectionHeader title="Eventos" icon={<Calendar size={20} />} linkTo="/eventos" />
                     {homeEvents.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {homeEvents.map(item => (

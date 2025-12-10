@@ -1,27 +1,65 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { foundries } from '../data/mockData';
 import FoundryCard from '../components/FoundryCard';
 import { Search, ChevronRight, Factory, Filter } from 'lucide-react';
 import { Foundry } from '../types';
 import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
+import { supabase } from '../lib/supabaseClient';
+import { useCategories } from '../hooks/useCategories';
 
 const Foundries = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [filteredFoundries, setFilteredFoundries] = useState<Foundry[]>(foundries);
+  const [foundries, setFoundries] = useState<Foundry[]>([]);
+  const [filteredFoundries, setFilteredFoundries] = useState<Foundry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Extract unique categories
-  const categories = Array.from(new Set(foundries.map(f => f.category))).sort();
+  // Fetch categories dynamically
+  const { categories } = useCategories('foundry');
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    // Simulate loading
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    fetchFoundries();
   }, []);
+
+  const fetchFoundries = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('foundries')
+        .select('*')
+        .eq('status', 'active')
+        .order('is_verified', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedFoundries: Foundry[] = data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          logoUrl: item.logo_url || '',
+          category: item.category,
+          description: item.description,
+          phone: item.phone,
+          email: item.email,
+          location: item.location,
+          website: item.website,
+          isVerified: item.is_verified,
+          rating: item.rating,
+          status: item.status,
+          joinedDate: new Date(item.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+        }));
+        setFoundries(mappedFoundries);
+        setFilteredFoundries(mappedFoundries);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar fundições:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Create a copy to avoid mutating the original data during sort
@@ -48,7 +86,7 @@ const Foundries = () => {
     });
 
     setFilteredFoundries(results);
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, foundries]);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-12">
@@ -66,22 +104,20 @@ const Foundries = () => {
 
       <main className="container mx-auto px-4">
         
-        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
+        {/* Banner Topo Grande */}
         <div className="w-full mb-8">
-            {/* Desktop Version */}
             <div className="hidden md:block">
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
-            {/* Mobile Version */}
             <div className="block md:hidden">
                 <AdSpot 
                     position="top_large_mobile" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
@@ -116,7 +152,7 @@ const Foundries = () => {
             {/* Main Content */}
             <div className="lg:col-span-9">
                 
-                {/* Category Filters */}
+                {/* Category Filters (Dynamic) */}
                 <div className="mb-8 flex flex-wrap gap-2">
                     <button 
                         onClick={() => setSelectedCategory(null)}
@@ -130,15 +166,15 @@ const Foundries = () => {
                     </button>
                     {categories.map(cat => (
                         <button 
-                            key={cat}
-                            onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.name === selectedCategory ? null : cat.name)}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                                selectedCategory === cat 
+                                selectedCategory === cat.name 
                                 ? 'bg-primary text-white border-primary' 
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                             }`}
                         >
-                            {cat}
+                            {cat.name}
                         </button>
                     ))}
                 </div>

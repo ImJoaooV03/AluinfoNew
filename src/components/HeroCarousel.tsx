@@ -1,41 +1,64 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
+import { supabase } from '../lib/supabaseClient';
 
 export interface HeroSlide {
   id: string;
-  image: string;
+  image_url: string;
   title: string;
   subtitle?: string;
+  link_url?: string;
 }
 
-const slides: HeroSlide[] = [
-  {
-    id: '1',
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2000&auto=format&fit=crop',
-    title: 'ELECTRONICS',
-  },
-  {
-    id: '2',
-    image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=2000&auto=format&fit=crop',
-    title: 'AUTOMOTIVE',
-  },
-  {
-    id: '3',
-    image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=2000&auto=format&fit=crop',
-    title: 'INDUSTRIAL',
-  }
-];
+interface HeroCarouselProps {
+  slides?: HeroSlide[]; // Optional prop for controlled mode (Admin Preview)
+  autoPlay?: boolean;
+}
 
-const HeroCarousel = () => {
+const HeroCarousel: React.FC<HeroCarouselProps> = ({ slides: propSlides, autoPlay = true }) => {
+  const [internalSlides, setInternalSlides] = useState<HeroSlide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [loading, setLoading] = useState(!propSlides);
+
+  // Use props if available, otherwise fetch from Supabase
+  const slides = propSlides || internalSlides;
+
+  useEffect(() => {
+    if (propSlides) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchSlides = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('hero_slides')
+          .select('*')
+          .eq('status', 'active')
+          .order('display_order', { ascending: true });
+
+        if (!error && data) {
+          setInternalSlides(data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar slides:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSlides();
+  }, [propSlides]);
 
   const nextSlide = useCallback(() => {
+    if (slides.length === 0) return;
     setCurrentIndex((prev) => (prev + 1) % slides.length);
-  }, []);
+  }, [slides.length]);
 
   const prevSlide = () => {
+    if (slides.length === 0) return;
     setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
@@ -44,10 +67,19 @@ const HeroCarousel = () => {
   };
 
   useEffect(() => {
-    if (isPaused) return;
-    const interval = setInterval(nextSlide, 5000); // 5 seconds autoplay
+    if (!autoPlay || isPaused || slides.length <= 1) return;
+    const interval = setInterval(nextSlide, 5000);
     return () => clearInterval(interval);
-  }, [isPaused, nextSlide]);
+  }, [autoPlay, isPaused, nextSlide, slides.length]);
+
+  if (loading) {
+    return <div className="w-full h-32 md:h-48 lg:h-64 bg-gray-200 animate-pulse"></div>;
+  }
+
+  // If no slides (and not loading), don't render anything (or render placeholder if desired)
+  if (slides.length === 0) {
+    return null; 
+  }
 
   return (
     <div 
@@ -65,66 +97,69 @@ const HeroCarousel = () => {
               index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
             )}
           >
-            {/* Background Image */}
-            <img 
-              src={slide.image} 
-              alt={slide.title} 
-              className="w-full h-full object-cover"
-            />
-            
-            {/* Blue Overlay (Matches reference) */}
-            <div className="absolute inset-0 bg-blue-900/60 mix-blend-multiply" />
-            <div className="absolute inset-0 bg-black/20" />
-
-            {/* Content Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-                <div className="relative border border-white/30 bg-white/5 backdrop-blur-[2px] px-8 py-4 md:px-16 md:py-6 rounded-sm text-center">
-                    <h2 className="text-3xl md:text-5xl font-bold text-white tracking-[0.15em] uppercase drop-shadow-md">
-                        {slide.title}
-                    </h2>
-                    {/* Red Underline */}
-                    <div className="h-1 w-16 md:w-24 bg-red-600 mx-auto mt-2 shadow-sm"></div>
-                </div>
-            </div>
+            {/* Link Wrapper (Optional) */}
+            {slide.link_url ? (
+                <a href={slide.link_url} className="block w-full h-full cursor-pointer">
+                    <SlideContent slide={slide} />
+                </a>
+            ) : (
+                <SlideContent slide={slide} />
+            )}
           </div>
         ))}
       </div>
 
-      {/* Navigation Arrows */}
-      <button 
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/30 text-white hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft size={24} />
-      </button>
-      
-      <button 
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/30 text-white hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-        aria-label="Next slide"
-      >
-        <ChevronRight size={24} />
-      </button>
+      {/* Navigation Arrows (Only if > 1 slide) */}
+      {slides.length > 1 && (
+        <>
+            <button 
+                onClick={prevSlide}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/30 text-white hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                aria-label="Previous slide"
+            >
+                <ChevronLeft size={24} />
+            </button>
+            
+            <button 
+                onClick={nextSlide}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/30 text-white hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                aria-label="Next slide"
+            >
+                <ChevronRight size={24} />
+            </button>
 
-      {/* Pagination Indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={clsx(
-              "w-2 h-2 rounded-full transition-all duration-300",
-              index === currentIndex 
-                ? "bg-primary w-6" 
-                : "bg-white/50 hover:bg-white"
-            )}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
+            {/* Pagination Indicators */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+                {slides.map((_, index) => (
+                <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={clsx(
+                    "w-2 h-2 rounded-full transition-all duration-300 shadow-sm",
+                    index === currentIndex 
+                        ? "bg-primary w-6" 
+                        : "bg-white/70 hover:bg-white"
+                    )}
+                    aria-label={`Go to slide ${index + 1}`}
+                />
+                ))}
+            </div>
+        </>
+      )}
     </div>
   );
 };
+
+// Helper component for content rendering - CLEAN VERSION (Image Only)
+const SlideContent = ({ slide }: { slide: HeroSlide }) => (
+    <>
+        {/* Background Image Only */}
+        <img 
+            src={slide.image_url} 
+            alt={slide.title} 
+            className="w-full h-full object-cover"
+        />
+    </>
+);
 
 export default HeroCarousel;

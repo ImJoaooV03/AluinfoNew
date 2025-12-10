@@ -6,6 +6,7 @@ import { Supplier } from '../types';
 import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
 import { supabase } from '../lib/supabaseClient';
+import { useCategories } from '../hooks/useCategories';
 
 const Suppliers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,6 +14,9 @@ const Suppliers = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch categories dynamically
+  const { categories } = useCategories('supplier');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -56,9 +60,6 @@ const Suppliers = () => {
       setIsLoading(false);
     }
   };
-
-  // Extract unique categories from real data
-  const categories = Array.from(new Set(suppliers.map(s => s.category))).sort();
 
   useEffect(() => {
     let results = [...suppliers];
@@ -150,7 +151,7 @@ const Suppliers = () => {
             {/* Main Content */}
             <div className="lg:col-span-9">
                 
-                {/* Category Filters */}
+                {/* Category Filters (Dynamic) */}
                 <div className="mb-8 flex flex-wrap gap-2">
                     <button 
                         onClick={() => setSelectedCategory(null)}
@@ -164,15 +165,15 @@ const Suppliers = () => {
                     </button>
                     {categories.map(cat => (
                         <button 
-                            key={cat}
-                            onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.name === selectedCategory ? null : cat.name)}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                                selectedCategory === cat 
+                                selectedCategory === cat.name 
                                 ? 'bg-primary text-white border-primary' 
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                             }`}
                         >
-                            {cat}
+                            {cat.name}
                         </button>
                     ))}
                 </div>

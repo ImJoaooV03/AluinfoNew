@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Save, ArrowLeft, Image as ImageIcon, Loader2, AlertCircle, Calendar, User, Tag, FileText, AlignLeft, Info, UploadCloud, Bold, Italic, Heading, List, Link as LinkIcon, Trash2, RefreshCw } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Loader2, AlertCircle, Calendar, User, Tag, FileText, AlignLeft, Info, UploadCloud, Bold, Italic, Heading, List, Link as LinkIcon, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
+import { useCategories } from '../../hooks/useCategories';
 
 // Interface estrita alinhada com o banco de dados
 interface NewsPayload {
@@ -24,6 +25,7 @@ const NewsEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const { categories, loading: categoriesLoading } = useCategories('news');
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -36,7 +38,7 @@ const NewsEditor = () => {
     subtitle: '',
     summary: '',
     content: '',
-    category: 'MERCADO',
+    category: '', // Inicialmente vazio, aguardando carregamento ou seleção
     author: '',
     image_url: '',
     status: 'draft',
@@ -51,6 +53,13 @@ const NewsEditor = () => {
       fetchArticle();
     }
   }, [id]);
+
+  // Define categoria padrão assim que as categorias carregarem, se for uma nova notícia
+  useEffect(() => {
+    if (!isEditing && !formData.category && categories.length > 0) {
+      setFormData(prev => ({ ...prev, category: categories[0].name }));
+    }
+  }, [categories, isEditing, formData.category]);
 
   const fetchArticle = async () => {
     try {
@@ -68,7 +77,7 @@ const NewsEditor = () => {
           subtitle: data.subtitle || '',
           summary: data.summary || '',
           content: data.content || '',
-          category: data.category || 'MERCADO',
+          category: data.category || '',
           author: data.author || '',
           image_url: data.image_url || '',
           status: data.status || 'draft',
@@ -176,12 +185,8 @@ const NewsEditor = () => {
     setError(null);
 
     try {
-      // PREPARAÇÃO DO PAYLOAD
-      // Removemos explicitamente updated_at e created_at para evitar o erro PGRST204
-      // se o cache do esquema estiver desatualizado ou se o banco gerenciar isso automaticamente.
       const payload: NewsPayload = {
         ...formData,
-        // Garantir que campos opcionais vazios sejam tratados corretamente se necessário
       };
 
       let error;
@@ -193,7 +198,6 @@ const NewsEditor = () => {
           .eq('id', id);
         error = updateError;
       } else {
-        // Para inserção, definimos views como 0. O created_at é gerado pelo banco (default now())
         const { error: insertError } = await supabase
           .from('news')
           .insert([{ ...payload, views: 0 }]);
@@ -206,7 +210,6 @@ const NewsEditor = () => {
     } catch (err: any) {
       console.error('Erro ao salvar:', err);
       
-      // Tratamento específico para erro de Cache de Esquema (PGRST204)
       if (err.code === 'PGRST204') {
         setError(
           'Erro de Sincronização (PGRST204): O Supabase não reconhece algumas colunas. ' +
@@ -280,11 +283,6 @@ const NewsEditor = () => {
                 <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={18} />
                 <p className="text-sm text-red-700 font-medium">{error}</p>
             </div>
-            {error.includes('PGRST204') && (
-                <div className="ml-8 text-xs text-red-600 bg-red-100 p-2 rounded border border-red-200">
-                    <strong>Dica Técnica:</strong> Isso acontece quando colunas novas (como 'updated_at' ou 'subtitle') foram criadas no banco mas a API ainda não atualizou o cache. O reload no painel resolve instantaneamente.
-                </div>
-            )}
           </div>
         )}
 
@@ -302,9 +300,6 @@ const NewsEditor = () => {
               
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Título da Notícia</label>
-                <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                    <Info size={12} /> O título principal que aparecerá na listagem e no topo da página.
-                </p>
                 <input 
                   type="text" 
                   name="title"
@@ -318,9 +313,6 @@ const NewsEditor = () => {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Subtítulo (Opcional)</label>
-                <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                    <Info size={12} /> Uma linha de apoio que aparece logo abaixo do título para dar contexto.
-                </p>
                 <input 
                   type="text" 
                   name="subtitle"
@@ -333,9 +325,6 @@ const NewsEditor = () => {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Resumo</label>
-                <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                    <Info size={12} /> Texto curto exibido nos cards da página inicial. Máximo de 2-3 linhas.
-                </p>
                 <textarea 
                   name="summary"
                   value={formData.summary}
@@ -359,29 +348,16 @@ const NewsEditor = () => {
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
                   Conteúdo
                 </label>
-                <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
-                  <Info size={12} /> Utilize a barra de ferramentas abaixo para formatar o texto. Não é necessário saber código.
-                </p>
                 
                 {/* Simple Toolbar */}
                 <div className="flex items-center gap-1 bg-gray-50 border border-gray-300 border-b-0 rounded-t-md p-2">
-                    <button type="button" onClick={() => insertTag('bold')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Negrito">
-                        <Bold size={16} />
-                    </button>
-                    <button type="button" onClick={() => insertTag('italic')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Itálico">
-                        <Italic size={16} />
-                    </button>
+                    <button type="button" onClick={() => insertTag('bold')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Negrito"><Bold size={16} /></button>
+                    <button type="button" onClick={() => insertTag('italic')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Itálico"><Italic size={16} /></button>
                     <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                    <button type="button" onClick={() => insertTag('h3')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Subtítulo">
-                        <Heading size={16} />
-                    </button>
-                    <button type="button" onClick={() => insertTag('p')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Parágrafo">
-                        <span className="font-serif font-bold text-sm px-1">P</span>
-                    </button>
+                    <button type="button" onClick={() => insertTag('h3')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Subtítulo"><Heading size={16} /></button>
+                    <button type="button" onClick={() => insertTag('p')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Parágrafo"><span className="font-serif font-bold text-sm px-1">P</span></button>
                     <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                    <button type="button" onClick={() => insertTag('ul')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Lista">
-                        <List size={16} />
-                    </button>
+                    <button type="button" onClick={() => insertTag('ul')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Lista"><List size={16} /></button>
                 </div>
 
                 <textarea 
@@ -408,7 +384,6 @@ const NewsEditor = () => {
               
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status</label>
-                <p className="text-xs text-gray-500 mb-2">Define se a notícia está visível no site.</p>
                 <select 
                   name="status"
                   value={formData.status}
@@ -425,7 +400,6 @@ const NewsEditor = () => {
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex items-center gap-2">
                   <Calendar size={14} /> Data de Publicação
                 </label>
-                <p className="text-xs text-gray-500 mb-2">Data exibida na notícia.</p>
                 <input 
                   type="date" 
                   name="publish_date"
@@ -458,20 +432,17 @@ const NewsEditor = () => {
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex items-center gap-2">
                   <Tag size={14} /> Categoria
                 </label>
-                <p className="text-xs text-gray-500 mb-2">Seção onde a notícia será exibida.</p>
                 <select 
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  disabled={categoriesLoading}
                 >
-                  <option value="MERCADO">Mercado</option>
-                  <option value="INOVAÇÃO">Inovação</option>
-                  <option value="SUSTENTABILIDADE">Sustentabilidade</option>
-                  <option value="TECNOLOGIA">Tecnologia</option>
-                  <option value="INDÚSTRIA 4.0">Indústria 4.0</option>
-                  <option value="ECONOMIA">Economia</option>
-                  <option value="EVENTOS">Eventos</option>
+                  <option value="">Selecione...</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
 
@@ -479,7 +450,6 @@ const NewsEditor = () => {
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex items-center gap-2">
                   <User size={14} /> Autor
                 </label>
-                <p className="text-xs text-gray-500 mb-2">Nome de quem escreveu a matéria.</p>
                 <input 
                   type="text" 
                   name="author"
@@ -500,11 +470,6 @@ const NewsEditor = () => {
               
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Imagem de Capa</label>
-                <p className="text-xs text-gray-500 mb-3">
-                    Carregue uma imagem (JPG, PNG) para ilustrar a notícia.
-                </p>
-                
-                {/* File Upload Input */}
                 <div className="relative">
                     <input 
                         type="file" 
@@ -530,7 +495,6 @@ const NewsEditor = () => {
                             <div className="flex flex-col items-center text-gray-500">
                                 <UploadCloud className="mb-2" size={24} />
                                 <span className="text-xs font-bold">Clique para enviar</span>
-                                <span className="text-[10px] text-gray-400 mt-1">ou arraste o arquivo aqui</span>
                             </div>
                         )}
                     </label>
@@ -544,19 +508,11 @@ const NewsEditor = () => {
                     src={formData.image_url} 
                     alt="Preview" 
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Erro+na+Imagem';
-                    }}
                   />
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-xs font-bold uppercase">Pré-visualização</span>
-                  </div>
-                  {/* Option to clear image */}
                   <button 
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
                     className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
-                    title="Remover imagem"
                   >
                     <Trash2 size={14} />
                   </button>

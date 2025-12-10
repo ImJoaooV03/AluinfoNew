@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Save, ArrowLeft, Loader2, AlertCircle, Building2, MapPin, Globe, Mail, Phone, ShieldCheck, Package, Plus, X, Edit2, Trash2, UploadCloud, Image as ImageIcon, MessageSquare, Link as LinkIcon } from 'lucide-react';
+import { Save, ArrowLeft, Loader2, AlertCircle, Building2, MapPin, Globe, Mail, Phone, ShieldCheck, Package, Plus, X, Edit2, Trash2, UploadCloud, Image as ImageIcon, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
+import { useCategories } from '../../hooks/useCategories';
 
 interface ProductItem {
   id?: string;
@@ -14,7 +15,7 @@ interface ProductItem {
   price: string;
   description: string;
   image_url: string;
-  link_url?: string; // Novo campo
+  link_url?: string;
   type: 'product' | 'service';
 }
 
@@ -22,6 +23,7 @@ const SupplierEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const { categories, loading: categoriesLoading } = useCategories('supplier');
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -30,11 +32,11 @@ const SupplierEditor = () => {
   // Dados do Fornecedor
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Equipamentos',
+    category: '',
     description: '',
     phone: '',
     email: '',
-    whatsapp: '', // Novo campo
+    whatsapp: '',
     location: '',
     website: '',
     logo_url: '',
@@ -63,6 +65,12 @@ const SupplierEditor = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (!isEditing && !formData.category && categories.length > 0) {
+      setFormData(prev => ({ ...prev, category: categories[0].name }));
+    }
+  }, [categories, isEditing, formData.category]);
+
   const fetchSupplierAndProducts = async () => {
     try {
       // 1. Buscar Fornecedor
@@ -77,11 +85,11 @@ const SupplierEditor = () => {
       if (supplierData) {
         setFormData({
           name: supplierData.name || '',
-          category: supplierData.category || 'Equipamentos',
+          category: supplierData.category || '',
           description: supplierData.description || '',
           phone: supplierData.phone || '',
           email: supplierData.email || '',
-          whatsapp: supplierData.whatsapp || '', // Mapear novo campo
+          whatsapp: supplierData.whatsapp || '',
           location: supplierData.location || '',
           website: supplierData.website || '',
           logo_url: supplierData.logo_url || '',
@@ -163,7 +171,7 @@ const SupplierEditor = () => {
         price: 'Sob Consulta',
         description: '',
         image_url: '',
-        link_url: '', // Resetar novo campo
+        link_url: '',
         type: 'product'
       });
     }
@@ -396,16 +404,12 @@ const SupplierEditor = () => {
                     value={formData.category}
                     onChange={handleChange}
                     className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    disabled={categoriesLoading}
                     >
-                    <option value="Equipamentos">Equipamentos</option>
-                    <option value="Matéria Prima">Matéria Prima</option>
-                    <option value="Software">Software</option>
-                    <option value="Automação">Automação</option>
-                    <option value="Serviços">Serviços</option>
-                    <option value="Insumos">Insumos</option>
-                    <option value="Reciclagem">Reciclagem</option>
-                    <option value="Ferramentaria">Ferramentaria</option>
-                    <option value="Consultoria">Consultoria</option>
+                    <option value="">Selecione...</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
                     </select>
                 </div>
 
@@ -574,7 +578,6 @@ const SupplierEditor = () => {
                     className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                     placeholder="5511999999999 ou https://..."
                     />
-                    <p className="text-[10px] text-gray-400 mt-1">Insira apenas números para WhatsApp ou a URL completa.</p>
                 </div>
 
                 <div className="md:col-span-2">

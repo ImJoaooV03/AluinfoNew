@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, Newspaper, BookOpen, Users, Factory, Megaphone, Facebook, Linkedin, Instagram, Calendar } from 'lucide-react';
+import { Menu, X, Home, Newspaper, BookOpen, Users, Factory, Megaphone, Linkedin, Instagram, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 
 const Header = () => {
@@ -43,12 +43,10 @@ const Header = () => {
           <span className="hidden md:inline text-gray-400">Portal Global do Mercado de Alumínio</span>
           <div className="flex items-center gap-4 ml-auto">
              <div className="flex items-center gap-2 text-gray-400 border-r border-gray-700 pr-4">
-                <a href="#" className="hover:text-primary transition-colors"><Linkedin size={12} /></a>
-                <a href="#" className="hover:text-primary transition-colors"><Instagram size={12} /></a>
-                <a href="#" className="hover:text-primary transition-colors"><Facebook size={12} /></a>
+                <a href="https://www.linkedin.com/in/portal-aluinfo-231955374/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors"><Linkedin size={12} /></a>
+                <a href="https://www.instagram.com/portal.aluinfo" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors"><Instagram size={12} /></a>
              </div>
-             <a href="#" className="text-primary hover:text-white transition-colors">Newsletter</a>
-             <a href="#" className="hover:text-primary transition-colors">Anuncie Conosco</a>
+             <Link to="/anuncie" className="hover:text-primary transition-colors">Anuncie Conosco</Link>
           </div>
         </div>
       </div>

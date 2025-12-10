@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Save, ArrowLeft, Loader2, AlertCircle, Factory, MapPin, Globe, Mail, Phone, ShieldCheck, UploadCloud, Image as ImageIcon, Trash2, Plus, X, Layers, MessageSquare, BarChart3, Info } from 'lucide-react';
+import { Save, ArrowLeft, Loader2, AlertCircle, Factory, MapPin, Globe, Mail, Phone, ShieldCheck, UploadCloud, Image as ImageIcon, Trash2, Plus, X, Layers, MessageSquare, BarChart3 } from 'lucide-react';
 import clsx from 'clsx';
+import { useCategories } from '../../hooks/useCategories';
 
 interface Capability {
   id?: string;
@@ -23,6 +24,7 @@ const FoundryEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const { categories, loading: categoriesLoading } = useCategories('foundry');
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -35,7 +37,7 @@ const FoundryEditor = () => {
   // Form Data
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Injeção sob Pressão',
+    category: '',
     description: '',
     phone: '',
     email: '',
@@ -71,6 +73,12 @@ const FoundryEditor = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (!isEditing && !formData.category && categories.length > 0) {
+      setFormData(prev => ({ ...prev, category: categories[0].name }));
+    }
+  }, [categories, isEditing, formData.category]);
+
   const fetchFoundryData = async () => {
     try {
       // 1. Fetch Foundry
@@ -85,7 +93,7 @@ const FoundryEditor = () => {
       if (data) {
         setFormData({
           name: data.name || '',
-          category: data.category || 'Injeção sob Pressão',
+          category: data.category || '',
           description: data.description || '',
           phone: data.phone || '',
           email: data.email || '',
@@ -400,14 +408,12 @@ const FoundryEditor = () => {
                     value={formData.category}
                     onChange={handleChange}
                     className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    disabled={categoriesLoading}
                     >
-                    <option value="Injeção sob Pressão">Injeção sob Pressão</option>
-                    <option value="Coquilha">Coquilha (Gravidade)</option>
-                    <option value="Areia">Areia</option>
-                    <option value="Microfusão">Microfusão</option>
-                    <option value="Baixa Pressão">Baixa Pressão</option>
-                    <option value="Artística">Artística</option>
-                    <option value="Outros">Outros</option>
+                    <option value="">Selecione...</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
                     </select>
                 </div>
 

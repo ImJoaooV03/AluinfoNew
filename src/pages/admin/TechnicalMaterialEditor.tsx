@@ -4,11 +4,13 @@ import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Save, ArrowLeft, Loader2, AlertCircle, FileText, UploadCloud, Image as ImageIcon, Trash2, Bold, Italic, Heading, List, Paperclip } from 'lucide-react';
 import clsx from 'clsx';
+import { useCategories } from '../../hooks/useCategories';
 
 const TechnicalMaterialEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const { categories, loading: categoriesLoading } = useCategories('technical');
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -20,7 +22,7 @@ const TechnicalMaterialEditor = () => {
     title: '',
     description: '',
     content: '',
-    category: 'Manual',
+    category: '',
     file_url: '',
     cover_url: '',
     status: 'draft',
@@ -34,6 +36,12 @@ const TechnicalMaterialEditor = () => {
       fetchMaterial();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!isEditing && !formData.category && categories.length > 0) {
+      setFormData(prev => ({ ...prev, category: categories[0].name }));
+    }
+  }, [categories, isEditing, formData.category]);
 
   const fetchMaterial = async () => {
     try {
@@ -50,7 +58,7 @@ const TechnicalMaterialEditor = () => {
           title: data.title || '',
           description: data.description || '',
           content: data.content || '',
-          category: data.category || 'Manual',
+          category: data.category || '',
           file_url: data.file_url || '',
           cover_url: data.cover_url || '',
           status: data.status || 'draft',
@@ -359,13 +367,12 @@ const TechnicalMaterialEditor = () => {
                   value={formData.category}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  disabled={categoriesLoading}
                 >
-                  <option value="Manual">Manual</option>
-                  <option value="Normas">Normas</option>
-                  <option value="Técnico">Técnico</option>
-                  <option value="Catálogo">Catálogo</option>
-                  <option value="E-book">E-book</option>
-                  <option value="Artigo">Artigo</option>
+                  <option value="">Selecione...</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

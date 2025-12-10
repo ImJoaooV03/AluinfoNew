@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory, BookOpen, Mail, Book, Calendar, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory, BookOpen, Mail, Book, Calendar, FileText, MonitorPlay, Tag } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import clsx from 'clsx';
 
@@ -32,8 +32,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
     { icon: <Package size={20} />, label: 'Fornecedores', path: '/admin/suppliers' },
     { icon: <Factory size={20} />, label: 'Fundições', path: '/admin/foundries' },
     { icon: <Megaphone size={20} />, label: 'Publicidade', path: '/admin/ads' },
-    { icon: <FileText size={20} />, label: 'Mídia Kit', path: '/admin/media-kit' }, // Novo Item
+    { icon: <FileText size={20} />, label: 'Mídia Kit', path: '/admin/media-kit' },
     { icon: <Mail size={20} />, label: 'Leads', path: '/admin/leads' },
+    { icon: <MonitorPlay size={20} />, label: 'Carrossel Home', path: '/admin/hero' },
+    { icon: <Tag size={20} />, label: 'Categorias', path: '/admin/categories' }, // NOVO ITEM
     { icon: <Settings size={20} />, label: 'Configurações', path: '/admin/settings' },
   ];
 

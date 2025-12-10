@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Linkedin, Instagram } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -32,9 +33,11 @@ const Footer = () => {
         <div>
             <h3 className="text-white font-bold mb-4">Links Rápidos</h3>
             <ul className="space-y-2 text-xs">
-                {['Anuncie', 'Mídia Kit', 'Contato', 'Política de Privacidade', 'Termos de Uso'].map(item => (
-                    <li key={item}><a href="#" className="hover:text-primary transition-colors">{item}</a></li>
-                ))}
+                <li><Link to="/anuncie" className="hover:text-primary transition-colors">Anuncie</Link></li>
+                <li><Link to="/anuncie" className="hover:text-primary transition-colors">Mídia Kit</Link></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Contato</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Política de Privacidade</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Termos de Uso</a></li>
             </ul>
         </div>
 
@@ -42,9 +45,9 @@ const Footer = () => {
         <div>
             <h3 className="text-white font-bold mb-4">Serviços</h3>
             <ul className="space-y-2 text-xs">
-                {['Guia de Fornecedores', 'Guias de Fundições', 'Artigos Técnicos', 'Newsletter'].map(item => (
-                    <li key={item}><a href="#" className="hover:text-primary transition-colors">{item}</a></li>
-                ))}
+                <li><Link to="/fornecedores" className="hover:text-primary transition-colors">Guia de Fornecedores</Link></li>
+                <li><Link to="/fundicoes" className="hover:text-primary transition-colors">Guias de Fundições</Link></li>
+                <li><Link to="/artigos-tecnicos" className="hover:text-primary transition-colors">Artigos Técnicos</Link></li>
             </ul>
         </div>
 
@@ -53,14 +56,15 @@ const Footer = () => {
             <h3 className="text-white font-bold mb-4">Educação</h3>
             <ul className="space-y-2 text-xs mb-6">
                 <li><a href="#" className="hover:text-primary transition-colors">Cursos (Em breve)</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">E-books</a></li>
+                <li><Link to="/ebooks" className="hover:text-primary transition-colors">E-books</Link></li>
             </ul>
             
             <h3 className="text-white font-bold mb-4">Notícias</h3>
             <ul className="space-y-2 text-xs">
-                 {['Mercado', 'Análises', 'Cotações', 'Relatórios'].map(item => (
-                    <li key={item}><a href="#" className="hover:text-primary transition-colors">{item}</a></li>
-                ))}
+                 <li><Link to="/noticias" className="hover:text-primary transition-colors">Mercado</Link></li>
+                 <li><Link to="/noticias" className="hover:text-primary transition-colors">Análises</Link></li>
+                 <li><Link to="/noticias" className="hover:text-primary transition-colors">Cotações</Link></li>
+                 <li><Link to="/noticias" className="hover:text-primary transition-colors">Relatórios</Link></li>
             </ul>
         </div>
       </div>
@@ -72,8 +76,8 @@ const Footer = () => {
                 © 2024 ALUINFO. Todos os direitos reservados.
             </div>
             <div className="flex items-center gap-4">
-                <a href="#" className="text-gray-500 hover:text-white"><Instagram size={16} /></a>
-                <a href="#" className="text-gray-500 hover:text-white"><Linkedin size={16} /></a>
+                <a href="https://www.instagram.com/portal.aluinfo" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white"><Instagram size={16} /></a>
+                <a href="https://www.linkedin.com/in/portal-aluinfo-231955374/" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white"><Linkedin size={16} /></a>
             </div>
         </div>
       </div>
