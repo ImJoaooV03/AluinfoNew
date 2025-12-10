@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, Clock, Share2, Facebook, Twitter, Linkedin, MessageCircle, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, ChevronRight, AlertTriangle, Loader2, User } from 'lucide-react';
 import SectionHeader from '../components/SectionHeader';
 import RelatedNewsCarousel from '../components/RelatedNewsCarousel';
 import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
+import SocialShare from '../components/SocialShare';
 import { supabase } from '../lib/supabaseClient';
 import { Article as ArticleType, NewsItem } from '../types';
 
@@ -135,17 +136,15 @@ const Article = () => {
 
       <main className="container mx-auto px-4 py-8">
         
-        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
+        {/* Banner Topo Grande (Global) */}
         <div className="w-full mb-8">
-            {/* Desktop Version */}
             <div className="hidden md:block">
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
-            {/* Mobile Version */}
             <div className="block md:hidden">
                 <AdSpot 
                     position="top_large_mobile" 
@@ -186,7 +185,7 @@ const Article = () => {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-6 border-t border-gray-100 mt-6">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border border-gray-300">
-                                {article.author?.charAt(0).toUpperCase()}
+                                <User size={20} />
                             </div>
                             <div>
                                 <div className="text-sm font-bold text-gray-900">{article.author}</div>
@@ -220,20 +219,8 @@ const Article = () => {
                 <div className="p-6 md:p-10 flex flex-col md:flex-row gap-8">
                     
                     {/* Sticky Share Buttons (Desktop) */}
-                    <div className="hidden md:flex flex-col gap-3 sticky top-24 h-fit">
-                        <span className="text-[10px] font-bold text-gray-400 text-center uppercase mb-1">Share</span>
-                        <button className="w-10 h-10 rounded-full bg-[#3b5998] text-white flex items-center justify-center hover:opacity-90 transition-opacity" title="Facebook">
-                            <Facebook size={18} />
-                        </button>
-                        <button className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90 transition-opacity" title="LinkedIn">
-                            <Linkedin size={18} />
-                        </button>
-                        <button className="w-10 h-10 rounded-full bg-[#1da1f2] text-white flex items-center justify-center hover:opacity-90 transition-opacity" title="Twitter">
-                            <Twitter size={18} />
-                        </button>
-                        <button className="w-10 h-10 rounded-full bg-[#25d366] text-white flex items-center justify-center hover:opacity-90 transition-opacity" title="WhatsApp">
-                            <MessageCircle size={18} />
-                        </button>
+                    <div className="hidden md:block sticky top-24 h-fit">
+                        <SocialShare url={window.location.href} title={article.title} orientation="vertical" />
                     </div>
 
                     {/* Text Content */}
@@ -243,24 +230,9 @@ const Article = () => {
                 </div>
 
                 {/* Mobile Share Buttons */}
-                <div className="md:hidden p-6 border-t border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                        <Share2 size={16} /> Compartilhar este artigo
-                    </h3>
-                    <div className="flex gap-3">
-                         <button className="flex-1 py-2 rounded bg-[#3b5998] text-white flex items-center justify-center">
-                            <Facebook size={18} />
-                        </button>
-                        <button className="flex-1 py-2 rounded bg-[#0077b5] text-white flex items-center justify-center">
-                            <Linkedin size={18} />
-                        </button>
-                        <button className="flex-1 py-2 rounded bg-[#1da1f2] text-white flex items-center justify-center">
-                            <Twitter size={18} />
-                        </button>
-                        <button className="flex-1 py-2 rounded bg-[#25d366] text-white flex items-center justify-center">
-                            <MessageCircle size={18} />
-                        </button>
-                    </div>
+                <div className="md:hidden p-6 border-t border-gray-100 flex flex-col items-center">
+                    <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wide">Compartilhar</h3>
+                    <SocialShare url={window.location.href} title={article.title} orientation="horizontal" />
                 </div>
 
                 {/* Related News Carousel */}
