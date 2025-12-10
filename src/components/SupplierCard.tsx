@@ -1,6 +1,6 @@
 import React from 'react';
 import { Supplier } from '../types';
-import { Phone, Mail, MapPin, CheckCircle, ExternalLink } from 'lucide-react';
+import { Phone, Mail, MapPin, CheckCircle, ExternalLink, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface SupplierCardProps {
@@ -24,11 +24,18 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, hideLogo = false,
       {/* Logo Area - Full Width (Conditionally Rendered) */}
       {!hideLogo && (
         <div className="h-40 bg-white flex items-center justify-center border-b border-gray-100 relative group-hover:bg-gray-50 transition-colors overflow-hidden">
-            <img 
-                src={supplier.logoUrl} 
-                alt={supplier.name} 
-                className="w-full h-full object-contain p-4 filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-80 group-hover:opacity-100" 
-            />
+            {supplier.logoUrl ? (
+                <img 
+                    src={supplier.logoUrl} 
+                    alt={supplier.name} 
+                    className="w-full h-full object-contain p-4 filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-80 group-hover:opacity-100" 
+                />
+            ) : (
+                <div className="flex flex-col items-center justify-center text-gray-300">
+                    <Package size={32} strokeWidth={1.5} />
+                    <span className="text-[10px] font-medium mt-1 uppercase tracking-wide">Sem Logo</span>
+                </div>
+            )}
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NewsItem } from '../types';
-import { Calendar, User, MapPin, FileText, Download, ExternalLink } from 'lucide-react';
+import { Calendar, User, MapPin, FileText, Download, ExternalLink, Image as ImageIcon } from 'lucide-react';
 
 interface NewsCardProps {
   item: NewsItem;
@@ -17,6 +17,8 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
         onDownloadRequest(item);
     }
   };
+
+  const fallbackImage = 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem';
 
   if (variant === 'technical') {
     return (
@@ -63,7 +65,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
         <div className="flex gap-4 mb-4">
             <div className="w-1/3 flex-shrink-0">
                 <img 
-                    src={item.imageUrl || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa'} 
+                    src={item.imageUrl || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa'} 
                     alt={item.title} 
                     className="w-full h-auto shadow-sm object-cover aspect-[3/4] rounded-sm" 
                 />
@@ -171,12 +173,18 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
   if (variant === 'compact') {
     return (
         <div className="bg-white border border-gray-200 rounded-sm overflow-hidden hover:shadow-lg transition-shadow group h-full flex flex-col">
-          <div className="relative overflow-hidden aspect-[4/3]">
-            <img 
-                src={item.imageUrl} 
-                alt={item.title} 
-                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-            />
+          <div className="relative overflow-hidden aspect-[4/3] bg-gray-100">
+            {item.imageUrl ? (
+                <img 
+                    src={item.imageUrl} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                />
+            ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                    <ImageIcon size={32} />
+                </div>
+            )}
             <div className="absolute top-2 left-2">
                 <span className="bg-primary/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">
                     {item.category}
@@ -199,12 +207,18 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
   // Default News Highlight
   return (
     <div className="bg-white border border-gray-200 rounded-sm overflow-hidden hover:shadow-lg transition-shadow group h-full flex flex-col">
-      <div className="relative overflow-hidden aspect-video">
-        <img 
-            src={item.imageUrl} 
-            alt={item.title} 
-            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-        />
+      <div className="relative overflow-hidden aspect-video bg-gray-100">
+        {item.imageUrl ? (
+            <img 
+                src={item.imageUrl} 
+                alt={item.title} 
+                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+            />
+        ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <ImageIcon size={48} />
+            </div>
+        )}
         <div className="absolute top-3 left-3 flex gap-2">
             <span className="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded uppercase flex items-center gap-1">
                 {item.category === 'INOVAÇÃO' ? <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span> : null}

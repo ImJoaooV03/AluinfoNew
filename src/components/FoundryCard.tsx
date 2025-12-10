@@ -1,6 +1,6 @@
 import React from 'react';
 import { Foundry } from '../types';
-import { Phone, Mail, MapPin, CheckCircle, ExternalLink } from 'lucide-react';
+import { Phone, Mail, MapPin, CheckCircle, ExternalLink, Factory } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface FoundryCardProps {
@@ -24,11 +24,18 @@ const FoundryCard: React.FC<FoundryCardProps> = ({ foundry, hideLogo = false, hi
       {/* Logo Area - Full Width (Conditionally Rendered) */}
       {!hideLogo && (
         <div className="h-40 bg-white flex items-center justify-center border-b border-gray-100 relative group-hover:bg-gray-50 transition-colors overflow-hidden">
-            <img 
-                src={foundry.logoUrl} 
-                alt={foundry.name} 
-                className="w-full h-full object-contain p-4 filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-80 group-hover:opacity-100" 
-            />
+            {foundry.logoUrl ? (
+                <img 
+                    src={foundry.logoUrl} 
+                    alt={foundry.name} 
+                    className="w-full h-full object-contain p-4 filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-80 group-hover:opacity-100" 
+                />
+            ) : (
+                <div className="flex flex-col items-center justify-center text-gray-300">
+                    <Factory size={32} strokeWidth={1.5} />
+                    <span className="text-[10px] font-medium mt-1 uppercase tracking-wide">Sem Logo</span>
+                </div>
+            )}
         </div>
       )}
 
