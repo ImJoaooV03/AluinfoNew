@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Save, ArrowLeft, Image as ImageIcon, Loader2, AlertCircle, Calendar, User, Tag, FileText, AlignLeft, Info, UploadCloud, Bold, Italic, Heading, List, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Loader2, FileText, AlignLeft, UploadCloud, Bold, Italic, Heading, List, Trash2, Plus, User, Clock, Tag, X, Star, Layout } from 'lucide-react';
 import clsx from 'clsx';
 import { useCategories } from '../../hooks/useCategories';
 import { useToast } from '../../contexts/ToastContext';
+import { useRegion } from '../../contexts/RegionContext';
 
-// Interface estrita alinhada com o banco de dados
 interface NewsPayload {
   title: string;
   subtitle: string;
@@ -15,24 +15,30 @@ interface NewsPayload {
   content: string;
   category: string;
   author: string;
+  author_role: string;
+  author_avatar: string;
+  read_time: string;
+  tags: string[];
   image_url: string;
   status: string;
   publish_date: string;
   is_highlight: boolean;
-  views?: number;
+  region: string;
 }
 
 const NewsEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const { region } = useRegion();
   const { categories, loading: categoriesLoading } = useCategories('news');
   const { addToast } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
-  const [error, setError] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [tagInput, setTagInput] = useState('');
 
   // Form States
   const [formData, setFormData] = useState<NewsPayload>({
@@ -40,23 +46,38 @@ const NewsEditor = () => {
     subtitle: '',
     summary: '',
     content: '',
-    category: '', // Inicialmente vazio, aguardando carregamento ou seleção
+    category: '', 
     author: '',
+    author_role: '',
+    author_avatar: '',
+    read_time: '',
+    tags: [],
     image_url: '',
     status: 'draft',
     publish_date: new Date().toISOString().split('T')[0],
-    is_highlight: false
+    is_highlight: false,
+    region: region
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Garante a região correta ao criar novo
+  useEffect(() => {
+    if (!isEditing) {
+        setFormData(prev => ({ ...prev, region: region }));
+    }
+  }, [region, isEditing]);
+
+  // Carregar dados se for edição
   useEffect(() => {
     if (isEditing) {
       fetchArticle();
+    } else {
+      setFetching(false);
     }
   }, [id]);
 
-  // Define categoria padrão assim que as categorias carregarem, se for uma nova notícia
+  // Pré-selecionar categoria
   useEffect(() => {
     if (!isEditing && !formData.category && categories.length > 0) {
       setFormData(prev => ({ ...prev, category: categories[0].name }));
@@ -81,15 +102,19 @@ const NewsEditor = () => {
           content: data.content || '',
           category: data.category || '',
           author: data.author || '',
+          author_role: data.author_role || '',
+          author_avatar: data.author_avatar || '',
+          read_time: data.read_time || '',
+          tags: data.tags || [],
           image_url: data.image_url || '',
           status: data.status || 'draft',
           publish_date: data.publish_date ? data.publish_date.split('T')[0] : new Date().toISOString().split('T')[0],
-          is_highlight: data.is_highlight || false
+          is_highlight: data.is_highlight || false,
+          region: data.region
         });
       }
     } catch (err: any) {
       console.error('Erro ao buscar artigo:', err);
-      setError('Falha ao carregar dados do artigo.');
       addToast('error', 'Erro ao carregar notícia.');
     } finally {
       setFetching(false);
@@ -101,428 +126,371 @@ const NewsEditor = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
+  // Tag Management
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (!formData.tags.includes(tagInput.trim())) {
+        setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
+      }
+      setTagInput('');
+    }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const removeTag = (tagToRemove: string) => {
+    setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'avatar') => {
     if (!e.target.files || e.target.files.length === 0) return;
 
     const file = e.target.files[0];
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    setUploadingImage(true);
-    setError(null);
+    const fileName = `${region}_${type}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    
+    if (type === 'cover') setUploadingImage(true);
+    else setUploadingAvatar(true);
 
     try {
-      // Upload to Supabase Storage
-      const { data, error: uploadError } = await supabase.storage
-        .from('news-images')
-        .upload(filePath, file);
+      // Usamos 'news-images' para capa e 'avatars' para autor (ou news-images também se preferir centralizar)
+      const bucket = type === 'cover' ? 'news-images' : 'avatars'; 
+      
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file);
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      // Get Public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('news-images')
-        .getPublicUrl(filePath);
+        .from(bucket)
+        .getPublicUrl(fileName);
 
-      setFormData(prev => ({ ...prev, image_url: publicUrl }));
+      if (type === 'cover') {
+        setFormData(prev => ({ ...prev, image_url: publicUrl }));
+      } else {
+        setFormData(prev => ({ ...prev, author_avatar: publicUrl }));
+      }
       addToast('success', 'Imagem enviada com sucesso!');
     } catch (err: any) {
       console.error('Erro no upload:', err);
-      addToast('error', 'Erro ao fazer upload da imagem.');
+      addToast('error', 'Erro ao fazer upload. Verifique se o bucket existe.');
     } finally {
-      setUploadingImage(false);
+      if (type === 'cover') setUploadingImage(false);
+      else setUploadingAvatar(false);
     }
   };
 
-  // Helper to insert tags into textarea
   const insertTag = (tag: string) => {
     if (!textareaRef.current) return;
-
     const start = textareaRef.current.selectionStart;
     const end = textareaRef.current.selectionEnd;
     const text = formData.content;
     const before = text.substring(0, start);
     const selection = text.substring(start, end);
     const after = text.substring(end);
-
     let newText = '';
     
     switch(tag) {
-        case 'bold':
-            newText = `${before}<strong>${selection || 'Texto em negrito'}</strong>${after}`;
-            break;
-        case 'italic':
-            newText = `${before}<em>${selection || 'Texto itálico'}</em>${after}`;
-            break;
-        case 'h3':
-            newText = `${before}<h3>${selection || 'Subtítulo'}</h3>${after}`;
-            break;
-        case 'p':
-            newText = `${before}<p>${selection || 'Novo parágrafo'}</p>${after}`;
-            break;
-        case 'ul':
-            newText = `${before}<ul>\n  <li>${selection || 'Item da lista'}</li>\n</ul>${after}`;
-            break;
-        default:
-            newText = text;
+        case 'bold': newText = `${before}<strong>${selection || 'Texto em negrito'}</strong>${after}`; break;
+        case 'italic': newText = `${before}<em>${selection || 'Texto em itálico'}</em>${after}`; break;
+        case 'h3': newText = `${before}<h3>${selection || 'Subtítulo'}</h3>${after}`; break;
+        case 'p': newText = `${before}<p>${selection || 'Parágrafo'}</p>${after}`; break;
+        case 'ul': newText = `${before}<ul>\n  <li>${selection || 'Item da lista'}</li>\n</ul>${after}`; break;
+        case 'blockquote': newText = `${before}<blockquote>${selection || 'Citação'}</blockquote>${after}`; break;
+        default: newText = text;
     }
-
-    setFormData(prev => ({ ...prev, content: newText }));
     
-    // Restore focus
-    setTimeout(() => {
-        textareaRef.current?.focus();
-    }, 0);
+    setFormData(prev => ({ ...prev, content: newText }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.category) {
+        addToast('error', 'Selecione uma categoria.');
+        return;
+    }
+
+    if (!formData.title) {
+        addToast('error', 'O título é obrigatório.');
+        return;
+    }
+
     setLoading(true);
-    setError(null);
 
     try {
-      const payload: NewsPayload = {
-        ...formData,
+      // Remove campos que não existem no banco se necessário, mas aqui estamos usando NewsPayload que deve bater com o banco
+      const payload = {
+        title: formData.title,
+        subtitle: formData.subtitle,
+        summary: formData.summary,
+        content: formData.content,
+        category: formData.category,
+        author: formData.author,
+        author_role: formData.author_role,
+        author_avatar: formData.author_avatar,
+        read_time: formData.read_time,
+        tags: formData.tags,
+        image_url: formData.image_url,
+        status: formData.status,
+        publish_date: formData.publish_date,
+        is_highlight: formData.is_highlight,
+        region: isEditing ? formData.region : region,
+        updated_at: new Date().toISOString()
       };
-
-      let error;
 
       if (isEditing) {
         const { error: updateError } = await supabase
           .from('news')
           .update(payload)
           .eq('id', id);
-        error = updateError;
+        if (updateError) throw updateError;
       } else {
         const { error: insertError } = await supabase
           .from('news')
-          .insert([{ ...payload, views: 0 }]);
-        error = insertError;
+          .insert([{ ...payload, views: 0, created_at: new Date().toISOString() }]);
+        if (insertError) throw insertError;
       }
 
-      if (error) throw error;
-
-      addToast('success', isEditing ? 'Notícia atualizada com sucesso!' : 'Notícia criada com sucesso!');
-      navigate('/admin/content');
+      addToast('success', isEditing ? 'Notícia atualizada!' : 'Notícia criada!');
+      navigate(`/${region}/admin/content`);
     } catch (err: any) {
       console.error('Erro ao salvar:', err);
-      
+      // Tratamento para erro de cache de schema
       if (err.code === 'PGRST204') {
-        const msg = 'Erro de Sincronização (PGRST204): O Supabase não reconhece algumas colunas.';
-        setError(msg);
-        addToast('error', msg);
+         addToast('error', 'Erro de esquema. Atualize o cache do Supabase (Settings > API > Reload schema cache).');
       } else {
-        setError(err.message || 'Erro ao salvar publicação.');
-        addToast('error', 'Erro ao salvar publicação.');
+         addToast('error', 'Erro ao salvar publicação.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetching) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="animate-spin text-primary" size={32} />
-        </div>
-      </AdminLayout>
-    );
-  }
+  if (fetching) return <AdminLayout><div className="flex justify-center h-64 items-center"><Loader2 className="animate-spin text-primary" size={32} /></div></AdminLayout>;
 
   return (
     <AdminLayout>
-      <form onSubmit={handleSubmit} className="max-w-5xl mx-auto pb-20">
+      <form onSubmit={handleSubmit} className="max-w-6xl mx-auto pb-20">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex justify-between items-center mb-8 bg-white p-4 rounded-xl border border-gray-200 shadow-sm sticky top-0 z-20">
           <div className="flex items-center gap-4">
-            <button 
-              type="button" 
-              onClick={() => navigate('/admin/content')}
-              className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500"
-            >
-              <ArrowLeft size={20} />
-            </button>
+            <button type="button" onClick={() => navigate(`/${region}/admin/content`)} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><ArrowLeft size={20} /></button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {isEditing ? 'Editar Notícia' : 'Nova Notícia'}
-              </h1>
-              <p className="text-sm text-gray-500">
-                {isEditing ? 'Atualize as informações da notícia abaixo.' : 'Preencha os campos para publicar uma nova notícia.'}
-              </p>
+                <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Editar Notícia' : 'Nova Notícia'}</h1>
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-bold text-primary">{region === 'pt' ? 'Brasil' : region === 'mx' ? 'México' : 'Global'}</p>
             </div>
           </div>
-          
-          <div className="flex gap-3 w-full md:w-auto">
-            <button 
-              type="button" 
-              onClick={() => navigate('/admin/content')}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex-1 md:flex-none justify-center"
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              disabled={loading || uploadingImage}
-              className="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-sm flex-1 md:flex-none disabled:opacity-70"
-            >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-              Salvar Notícia
+          <div className="flex gap-3">
+            <button type="button" onClick={() => navigate(`/${region}/admin/content`)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium transition-colors text-sm">Cancelar</button>
+            <button type="submit" disabled={loading || uploadingImage} className="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-md font-bold flex items-center gap-2 transition-colors shadow-sm disabled:opacity-70 text-sm">
+              {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Salvar
             </button>
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-sm flex flex-col gap-2">
-            <div className="flex items-start gap-3">
-                <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={18} />
-                <p className="text-sm text-red-700 font-medium">{error}</p>
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Left Column - Main Content */}
+          {/* Left Column: Main Content */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Basic Info Card */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-                <FileText size={20} className="text-primary" />
-                Informações Principais
+            {/* Basic Info */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4 flex gap-2">
+                <FileText size={16} /> Conteúdo Principal
               </h3>
               
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Título da Notícia</label>
-                <input 
-                  type="text" 
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="Ex: Mercado de alumínio cresce 15%..."
-                  required
-                />
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Título da Notícia <span className="text-red-500">*</span></label>
+                <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-lg font-bold text-gray-800 placeholder-gray-300" required placeholder="Digite um título impactante..." />
               </div>
-
+              
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Subtítulo (Opcional)</label>
-                <input 
-                  type="text" 
-                  name="subtitle"
-                  value={formData.subtitle}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="Uma breve linha de apoio ao título..."
-                />
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Subtítulo (Linha Fina)</label>
+                <input type="text" name="subtitle" value={formData.subtitle} onChange={handleChange} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Complemento do título..." />
               </div>
-
+              
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Resumo</label>
-                <textarea 
-                  name="summary"
-                  value={formData.summary}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
-                  placeholder="Um parágrafo curto que resume a notícia..."
-                  required
-                />
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Resumo <span className="text-red-500">*</span></label>
+                <textarea name="summary" value={formData.summary} onChange={handleChange} rows={3} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none" required placeholder="Breve descrição que aparecerá nos cards e resultados de busca..." />
               </div>
             </div>
 
-            {/* Content Editor Card */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-                <AlignLeft size={20} className="text-primary" />
-                Corpo da Notícia
+            {/* Rich Text Editor */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4 flex gap-2">
+                <AlignLeft size={16} /> Corpo da Notícia
               </h3>
               
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                  Conteúdo
-                </label>
-                
-                {/* Simple Toolbar */}
-                <div className="flex items-center gap-1 bg-gray-50 border border-gray-300 border-b-0 rounded-t-md p-2">
+              <div className="border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+                <div className="flex items-center gap-1 bg-gray-50 border-b border-gray-300 p-2 flex-wrap">
                     <button type="button" onClick={() => insertTag('bold')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Negrito"><Bold size={16} /></button>
                     <button type="button" onClick={() => insertTag('italic')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Itálico"><Italic size={16} /></button>
                     <div className="w-px h-4 bg-gray-300 mx-1"></div>
                     <button type="button" onClick={() => insertTag('h3')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Subtítulo"><Heading size={16} /></button>
-                    <button type="button" onClick={() => insertTag('p')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Parágrafo"><span className="font-serif font-bold text-sm px-1">P</span></button>
+                    <button type="button" onClick={() => insertTag('p')} className="p-1.5 hover:bg-gray-200 rounded font-serif font-bold text-sm px-2 text-gray-700" title="Parágrafo">P</button>
+                    <button type="button" onClick={() => insertTag('blockquote')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Citação">""</button>
                     <div className="w-px h-4 bg-gray-300 mx-1"></div>
                     <button type="button" onClick={() => insertTag('ul')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Lista"><List size={16} /></button>
                 </div>
-
                 <textarea 
-                  ref={textareaRef}
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  rows={15}
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-b-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors font-mono text-sm leading-relaxed"
-                  placeholder="Escreva o conteúdo da sua notícia aqui..."
-                  required
+                    ref={textareaRef} 
+                    name="content" 
+                    value={formData.content} 
+                    onChange={handleChange} 
+                    rows={20} 
+                    className="w-full px-4 py-3 border-none focus:ring-0 font-mono text-sm leading-relaxed" 
+                    required 
+                    placeholder="Escreva o conteúdo aqui. Use a barra acima para formatar."
                 />
               </div>
             </div>
-
           </div>
 
-          {/* Right Column - Settings & Meta */}
+          {/* Right Column: Settings & Meta */}
           <div className="space-y-6">
             
-            {/* Status Card */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4">Publicação</h3>
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status</label>
-                <select 
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                >
-                  <option value="draft">Rascunho (Oculto)</option>
-                  <option value="published">Publicado (Visível)</option>
-                  <option value="scheduled">Agendado</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex items-center gap-2">
-                  <Calendar size={14} /> Data de Publicação
-                </label>
-                <input 
-                  type="date" 
-                  name="publish_date"
-                  value={formData.publish_date}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-2 border-t border-gray-100 mt-2">
-                <input 
-                  type="checkbox" 
-                  id="is_highlight"
-                  name="is_highlight"
-                  checked={formData.is_highlight}
-                  onChange={handleCheckboxChange}
-                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                />
-                <label htmlFor="is_highlight" className="text-sm text-gray-700 font-medium cursor-pointer">
-                  Destacar na Home
-                </label>
-              </div>
-            </div>
-
-            {/* Categorization Card */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4">Categorização</h3>
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex items-center gap-2">
-                  <Tag size={14} /> Categoria
-                </label>
-                <select 
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  disabled={categoriesLoading}
-                >
-                  <option value="">Selecione...</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex items-center gap-2">
-                  <User size={14} /> Autor
-                </label>
-                <input 
-                  type="text" 
-                  name="author"
-                  value={formData.author}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="Nome do autor"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Media Card */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-                <ImageIcon size={20} className="text-primary" /> Mídia
+            {/* Publication Settings */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4 flex gap-2">
+                <Layout size={16} /> Publicação
               </h3>
               
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Imagem de Capa</label>
-                <div className="relative">
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Status</label>
+                    <select name="status" value={formData.status} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white">
+                      <option value="draft">Rascunho</option>
+                      <option value="published">Publicado</option>
+                      <option value="scheduled">Agendado</option>
+                    </select>
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-xs font-bold text-gray-700 uppercase">Categoria</label>
+                        <button type="button" onClick={() => navigate(`/${region}/admin/categories`)} className="text-[10px] text-primary hover:underline flex items-center gap-1 font-bold"><Plus size={10} /> NOVA</button>
+                    </div>
+                    <select name="category" value={formData.category} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white" disabled={categoriesLoading}>
+                      <option value="">Selecione...</option>
+                      {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Data de Publicação</label>
+                    <input type="date" name="publish_date" value={formData.publish_date} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                  </div>
+              </div>
+
+              <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="is_highlight" checked={formData.is_highlight} onChange={(e) => setFormData(prev => ({ ...prev, is_highlight: e.target.checked }))} className="w-5 h-5 text-primary rounded focus:ring-primary border-gray-300" />
+                    <div>
+                        <span className="block text-sm font-bold text-gray-800 flex items-center gap-1"><Star size={14} className="text-orange-500 fill-orange-500" /> Destaque Principal</span>
+                        <span className="block text-xs text-gray-500">Exibir no carrossel ou topo da home</span>
+                    </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Author & Meta */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4 flex gap-2">
+                    <User size={16} /> Autor & Detalhes
+                </h3>
+                
+                <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                        <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 overflow-hidden relative group cursor-pointer">
+                            {formData.author_avatar ? (
+                                <img src={formData.author_avatar} alt="Autor" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400"><User size={24} /></div>
+                            )}
+                            <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'avatar')} className="absolute inset-0 opacity-0 cursor-pointer z-10" disabled={uploadingAvatar} />
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                {uploadingAvatar ? <Loader2 size={16} className="text-white animate-spin" /> : <Plus size={16} className="text-white" />}
+                            </div>
+                        </div>
+                        <p className="text-[10px] text-center text-gray-500 mt-1">Foto</p>
+                    </div>
+                    <div className="flex-grow space-y-3">
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome</label>
+                            <input type="text" name="author" value={formData.author} onChange={handleChange} className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="Ex: João Silva" />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cargo</label>
+                            <input type="text" name="author_role" value={formData.author_role} onChange={handleChange} className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="Ex: Editor Chefe" />
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-1"><Clock size={14} /> Tempo de Leitura</label>
+                    <input type="text" name="read_time" value={formData.read_time} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="Ex: 5 min" />
+                </div>
+
+                <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-1"><Tag size={14} /> Tags</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        {formData.tags.map((tag, index) => (
+                            <span key={index} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded flex items-center gap-1 border border-gray-200">
+                                {tag}
+                                <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500"><X size={12} /></button>
+                            </span>
+                        ))}
+                    </div>
                     <input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        id="image-upload"
-                        disabled={uploadingImage}
+                        type="text" 
+                        value={tagInput} 
+                        onChange={(e) => setTagInput(e.target.value)} 
+                        onKeyDown={handleAddTag}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" 
+                        placeholder="Digite e Enter..." 
                     />
-                    <label 
-                        htmlFor="image-upload"
-                        className={clsx(
-                            "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors",
-                            uploadingImage ? "opacity-50 cursor-not-allowed" : ""
-                        )}
-                    >
+                </div>
+            </div>
+
+            {/* Cover Image */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-4 flex items-center gap-2">
+                <ImageIcon size={16} /> Imagem de Capa
+              </h3>
+              
+              {formData.image_url ? (
+                <div className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-video">
+                  <img src={formData.image_url} alt="Capa" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                     <label className="p-2 bg-white/20 hover:bg-white/40 rounded-full cursor-pointer text-white transition-colors">
+                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'cover')} className="hidden" disabled={uploadingImage} />
+                        <ImageIcon size={20} />
+                     </label>
+                     <button type="button" onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))} className="p-2 bg-red-500/80 hover:bg-red-600 rounded-full text-white transition-colors">
+                        <Trash2 size={20} />
+                     </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative">
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'cover')} className="hidden" id="cover-upload" disabled={uploadingImage} />
+                    <label htmlFor="cover-upload" className={clsx("flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group", uploadingImage && "opacity-50 cursor-not-allowed")}>
                         {uploadingImage ? (
-                            <div className="flex flex-col items-center text-gray-500">
-                                <Loader2 className="animate-spin mb-2" size={24} />
-                                <span className="text-xs">Enviando...</span>
-                            </div>
+                            <Loader2 className="animate-spin text-primary" size={24} />
                         ) : (
-                            <div className="flex flex-col items-center text-gray-500">
-                                <UploadCloud className="mb-2" size={24} />
-                                <span className="text-xs font-bold">Clique para enviar</span>
-                            </div>
+                            <>
+                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                    <UploadCloud className="text-gray-400" size={24} />
+                                </div>
+                                <span className="text-sm font-medium text-gray-600">Clique para enviar</span>
+                                <span className="text-xs text-gray-400 mt-1">JPG, PNG (Max 2MB)</span>
+                            </>
                         )}
                     </label>
                 </div>
-              </div>
-
-              {/* Image Preview */}
-              {formData.image_url && (
-                <div className="mt-4 rounded-lg overflow-hidden border border-gray-200 aspect-video bg-gray-50 relative group">
-                  <img 
-                    src={formData.image_url} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                    className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
               )}
             </div>
-
           </div>
         </div>
       </form>

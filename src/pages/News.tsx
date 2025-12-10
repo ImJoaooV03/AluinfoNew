@@ -7,6 +7,7 @@ import SidebarAds from '../components/SidebarAds';
 import { Search, ChevronRight, ChevronLeft, Loader2, Newspaper } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { NewsItem } from '../types';
+import { useRegion } from '../contexts/RegionContext';
 
 const NewsSkeleton = () => (
   <div className="animate-pulse space-y-8">
@@ -20,6 +21,7 @@ const NewsSkeleton = () => (
 );
 
 const News = () => {
+  const { region, t } = useRegion();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,7 +29,7 @@ const News = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchNews();
-  }, []);
+  }, [region]); // Recarregar quando a região mudar
 
   const fetchNews = async () => {
     try {
@@ -36,6 +38,7 @@ const News = () => {
         .from('news')
         .select('*')
         .eq('status', 'published')
+        .eq('region', region) // Filtro por Região
         .order('publish_date', { ascending: false });
 
       if (error) throw error;
@@ -46,7 +49,7 @@ const News = () => {
           title: item.title,
           summary: item.summary,
           category: item.category,
-          date: new Date(item.publish_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
+          date: new Date(item.publish_date).toLocaleDateString(region === 'pt' ? 'pt-BR' : region === 'mx' ? 'es-MX' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
           author: item.author,
           imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
           isHighlight: item.is_highlight,
@@ -76,26 +79,24 @@ const News = () => {
       <div className="bg-white border-b border-gray-200 mb-8">
         <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Link to="/" className="hover:text-primary transition-colors">Início</Link>
+                <Link to={`/${region}`} className="hover:text-primary transition-colors">{t('home')}</Link>
                 <ChevronRight size={12} />
-                <span className="text-gray-800 font-medium">Notícias</span>
+                <span className="text-gray-800 font-medium">{t('news')}</span>
             </div>
         </div>
       </div>
 
       <main className="container mx-auto px-4">
         
-        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
+        {/* Banner Topo Grande (Global) */}
         <div className="w-full mb-8">
-            {/* Desktop Version */}
             <div className="hidden md:block">
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
-            {/* Mobile Version */}
             <div className="block md:hidden">
                 <AdSpot 
                     position="top_large_mobile" 
@@ -107,15 +108,19 @@ const News = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4 border-b border-gray-200 pb-4">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Notícias</h1>
-                <p className="text-sm text-gray-500 mt-1">Acompanhe as últimas atualizações do mercado de alumínio.</p>
+                <h1 className="text-3xl font-bold text-gray-900">{t('news')}</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                    {region === 'pt' ? 'Acompanhe as últimas atualizações do mercado.' : 
+                     region === 'mx' ? 'Siga las últimas actualizaciones del mercado.' : 
+                     'Follow the latest market updates.'}
+                </p>
             </div>
             
             {/* Search Filter */}
             <div className="relative w-full md:w-64">
                 <input 
                     type="text" 
-                    placeholder="Filtrar notícias..." 
+                    placeholder={t('search') + "..."}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-primary transition-colors"
@@ -140,7 +145,7 @@ const News = () => {
                         {/* Featured News - Banner Style */}
                         {featuredNews && (
                             <section>
-                                <Link to={`/noticia/${featuredNews.id}`} className="block group relative rounded-sm overflow-hidden shadow-md h-[300px] md:h-[400px]">
+                                <Link to={`/${region}/noticia/${featuredNews.id}`} className="block group relative rounded-sm overflow-hidden shadow-md h-[300px] md:h-[400px]">
                                     <img 
                                         src={featuredNews.imageUrl} 
                                         alt={featuredNews.title} 
@@ -168,23 +173,12 @@ const News = () => {
                         {newsList.length > 0 && (
                             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {newsList.map(news => (
-                                    <Link to={`/noticia/${news.id}`} key={news.id} className="block h-full">
+                                    <Link to={`/${region}/noticia/${news.id}`} key={news.id} className="block h-full">
                                         <NewsCard item={news} variant="highlight" />
                                     </Link>
                                 ))}
                             </section>
                         )}
-
-                        {/* Pagination (Visual only for now) */}
-                        <div className="flex justify-center items-center gap-2 pt-8 border-t border-gray-200">
-                            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-500 hover:bg-gray-100 disabled:opacity-50" disabled>
-                                <ChevronLeft size={16} />
-                            </button>
-                            <button className="w-8 h-8 flex items-center justify-center rounded bg-primary text-white font-bold text-sm">1</button>
-                            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 text-gray-500 hover:bg-gray-100">
-                                <ChevronRight size={16} />
-                            </button>
-                        </div>
                     </>
                 )}
 

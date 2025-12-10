@@ -1,3 +1,5 @@
+export type Region = 'pt' | 'mx' | 'en';
+
 export interface NewsItem {
   id: string;
   title: string;
@@ -12,7 +14,8 @@ export interface NewsItem {
   location?: string;
   type?: 'news' | 'technical' | 'ebook' | 'event';
   fileUrl?: string;
-  linkUrl?: string; // Novo campo para links externos (Eventos, etc)
+  linkUrl?: string;
+  region?: Region; // Novo campo
 }
 
 export interface AdBanner {
@@ -45,6 +48,7 @@ export interface Supplier {
   rating?: number;
   status?: 'active' | 'inactive';
   joinedDate?: string;
+  region?: Region; // Novo campo
 }
 
 export interface Foundry {
@@ -67,6 +71,7 @@ export interface Foundry {
   yearsExperience?: string;
   monthlyCapacity?: string;
   marketReach?: string;
+  region?: Region; // Novo campo
 }
 
 export interface Product {

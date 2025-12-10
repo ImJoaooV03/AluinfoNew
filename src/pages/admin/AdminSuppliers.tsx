@@ -4,6 +4,7 @@ import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Search, Filter, Edit, Trash2, Plus, Loader2, AlertCircle, CheckCircle, XCircle, Star } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import { useRegion } from '../../contexts/RegionContext';
 import clsx from 'clsx';
 
 interface Supplier {
@@ -21,6 +22,7 @@ interface Supplier {
 const AdminSuppliers = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { region } = useRegion();
   const [searchTerm, setSearchTerm] = useState('');
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ const AdminSuppliers = () => {
 
   useEffect(() => {
     fetchSuppliers();
-  }, []);
+  }, [region]);
 
   const fetchSuppliers = async () => {
     try {
@@ -39,6 +41,7 @@ const AdminSuppliers = () => {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
+        .eq('region', region) // Filter by region
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -86,11 +89,11 @@ const AdminSuppliers = () => {
     <AdminLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Fornecedores</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Fornecedores ({region.toUpperCase()})</h1>
           <p className="text-gray-500">Catálogo de empresas e parceiros.</p>
         </div>
         <button 
-          onClick={() => navigate('/admin/suppliers/new')}
+          onClick={() => navigate(`/${region}/admin/suppliers/new`)}
           className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
         >
           <Plus size={18} />
@@ -104,11 +107,6 @@ const AdminSuppliers = () => {
             <div>
                 <h3 className="text-sm font-bold text-red-800">Erro ao carregar dados</h3>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
-                {error.includes('relation "suppliers" does not exist') && (
-                    <p className="text-xs text-red-600 mt-2 font-mono bg-red-100 p-2 rounded">
-                        A tabela 'suppliers' não existe. Execute o script de migração no Supabase.
-                    </p>
-                )}
             </div>
         </div>
       )}
@@ -172,7 +170,7 @@ const AdminSuppliers = () => {
                         <p>Nenhum fornecedor encontrado.</p>
                         {!error && (
                             <button 
-                                onClick={() => navigate('/admin/suppliers/new')}
+                                onClick={() => navigate(`/${region}/admin/suppliers/new`)}
                                 className="text-primary text-sm font-bold hover:underline mt-1"
                             >
                                 Cadastrar primeiro fornecedor
@@ -232,7 +230,7 @@ const AdminSuppliers = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
-                            onClick={() => navigate(`/admin/suppliers/edit/${supplier.id}`)}
+                            onClick={() => navigate(`/${region}/admin/suppliers/edit/${supplier.id}`)}
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" 
                             title="Editar"
                         >

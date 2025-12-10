@@ -11,8 +11,10 @@ import LeadCaptureModal from '../components/LeadCaptureModal';
 import { Wrench, Book, Calendar, Users, Factory, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { NewsItem, Supplier, Foundry } from '../types';
+import { useRegion } from '../contexts/RegionContext';
 
 const Home = () => {
+  const { region, t } = useRegion();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [techMaterials, setTechMaterials] = useState<NewsItem[]>([]);
   const [homeEbooks, setHomeEbooks] = useState<NewsItem[]>([]);
@@ -26,7 +28,7 @@ const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [downloadSource, setDownloadSource] = useState<'technical' | 'ebook'>('technical');
 
-  // Fetch Data from Supabase
+  // Fetch Data from Supabase - FILTERED BY REGION
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
@@ -37,6 +39,7 @@ const Home = () => {
           .from('news')
           .select('*')
           .eq('status', 'published')
+          .eq('region', region) // Region Filter
           .order('publish_date', { ascending: false })
           .limit(6);
 
@@ -45,6 +48,7 @@ const Home = () => {
           .from('technical_materials')
           .select('*')
           .eq('status', 'published')
+          .eq('region', region) // Region Filter
           .order('created_at', { ascending: false })
           .limit(3);
 
@@ -53,6 +57,7 @@ const Home = () => {
           .from('ebooks')
           .select('*')
           .eq('status', 'published')
+          .eq('region', region) // Region Filter
           .order('created_at', { ascending: false })
           .limit(3);
 
@@ -62,6 +67,7 @@ const Home = () => {
           .select('*')
           .eq('status', 'active')
           .eq('is_verified', true)
+          .eq('region', region) // Region Filter
           .order('created_at', { ascending: false })
           .limit(3);
 
@@ -71,15 +77,17 @@ const Home = () => {
           .select('*')
           .eq('status', 'active')
           .eq('is_verified', true)
+          .eq('region', region) // Region Filter
           .order('created_at', { ascending: false })
           .limit(3);
 
-        // 6. Buscar Eventos (NOVO)
+        // 6. Buscar Eventos
         const eventsPromise = supabase
           .from('events')
           .select('*')
-          .neq('status', 'inactive') 
-          .order('event_date', { ascending: true }) // Próximos primeiro
+          .neq('status', 'inactive')
+          .eq('region', region) // Region Filter
+          .order('event_date', { ascending: true }) 
           .limit(3);
 
         const [newsRes, materialsRes, ebooksRes, suppliersRes, foundriesRes, eventsRes] = await Promise.all([
@@ -97,9 +105,9 @@ const Home = () => {
             title: item.title,
             summary: item.summary,
             category: item.category,
-            date: new Date(item.publish_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
+            date: new Date(item.publish_date).toLocaleDateString(region === 'pt' ? 'pt-BR' : region === 'mx' ? 'es-MX' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
             author: item.author,
-            imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
+            imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
             isHighlight: item.is_highlight,
             type: 'news'
           })));
@@ -126,7 +134,7 @@ const Home = () => {
             category: item.category,
             date: new Date(item.created_at).getFullYear().toString(),
             downloads: item.downloads,
-            imageUrl: item.cover_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa',
+            imageUrl: item.cover_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa',
             fileUrl: item.file_url,
             author: item.author,
             type: 'ebook'
@@ -147,7 +155,7 @@ const Home = () => {
                 isVerified: item.is_verified,
                 rating: item.rating,
                 status: item.status,
-                joinedDate: new Date(item.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+                joinedDate: new Date(item.created_at).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', year: 'numeric' })
             })));
         }
 
@@ -165,7 +173,7 @@ const Home = () => {
                 isVerified: item.is_verified,
                 rating: item.rating,
                 status: item.status,
-                joinedDate: new Date(item.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+                joinedDate: new Date(item.created_at).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', year: 'numeric' })
             })));
         }
 
@@ -175,11 +183,11 @@ const Home = () => {
                 title: item.title,
                 summary: item.description,
                 category: 'Evento',
-                date: new Date(item.event_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
+                date: new Date(item.event_date).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
                 location: item.location,
-                imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/100x100/png?text=Evento',
+                imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/100x100/png?text=Evento',
                 type: 'event',
-                linkUrl: item.link_url // Mapeando o link externo
+                linkUrl: item.link_url
             })));
         }
 
@@ -191,7 +199,7 @@ const Home = () => {
     };
 
     fetchHomeData();
-  }, []);
+  }, [region]); // Re-run when region changes
 
   // Handler para abrir o modal de download
   const handleDownloadRequest = (item: NewsItem) => {
@@ -200,10 +208,8 @@ const Home = () => {
     setIsModalOpen(true);
   };
 
-  // Handler executado após o sucesso do cadastro do lead
   const handleLeadSubmit = async (email: string) => {
     if (selectedMaterial?.fileUrl) {
-        // Criar link temporário para forçar o download
         const link = document.createElement('a');
         link.href = selectedMaterial.fileUrl;
         link.target = '_blank';
@@ -211,14 +217,6 @@ const Home = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
-        // Opcional: Incrementar contador de downloads no banco
-        try {
-            const table = selectedMaterial.type === 'ebook' ? 'ebooks' : 'technical_materials';
-            await supabase.rpc('increment_downloads', { table_name: table, row_id: selectedMaterial.id });
-        } catch (e) {
-            // Ignora erro se a função RPC não existir
-        }
     }
   };
 
@@ -230,7 +228,7 @@ const Home = () => {
       <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="animate-spin text-primary" size={32} />
-          <span className="text-sm text-gray-500">Carregando portal...</span>
+          <span className="text-sm text-gray-500">Carregando portal ({region.toUpperCase()})...</span>
         </div>
       </div>
     );
@@ -245,10 +243,10 @@ const Home = () => {
         {/* Banner Topo */}
         <div className="w-full mb-8">
             <div className="hidden md:block">
-                <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" />
+                <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" />
             </div>
             <div className="block md:hidden">
-                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile" />
+                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile" />
             </div>
         </div>
 
@@ -257,19 +255,19 @@ const Home = () => {
                 
                 {/* Notícias */}
                 <section>
-                    <SectionHeader title="Últimas Notícias" linkTo="/noticias" />
+                    <SectionHeader title={t('latestNews')} linkTo={`/${region}/noticias`} />
                     {news.length > 0 ? (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             {highlightNews.map(item => (
-                                <Link to={`/noticia/${item.id}`} key={item.id} className="block h-full">
+                                <Link to={`/${region}/noticia/${item.id}`} key={item.id} className="block h-full">
                                     <NewsCard item={item} variant="highlight" />
                                 </Link>
                             ))}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {secondaryNews.map(item => (
-                                <Link to={`/noticia/${item.id}`} key={item.id} className="block h-full">
+                                <Link to={`/${region}/noticia/${item.id}`} key={item.id} className="block h-full">
                                     <NewsCard item={item} variant="compact" />
                                 </Link>
                             ))}
@@ -277,16 +275,16 @@ const Home = () => {
                       </>
                     ) : (
                       <div className="text-center py-10 bg-white border border-gray-200 rounded-sm">
-                        <p className="text-gray-500">Nenhuma notícia publicada.</p>
+                        <p className="text-gray-500">Nenhuma notícia publicada nesta região.</p>
                       </div>
                     )}
                 </section>
 
-                <AdSpot position="home_middle_1" className="w-full bg-gray-300" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/555555/ffffff?text=WALBERT" />
+                <AdSpot position="home_middle_1" className="w-full bg-gray-300" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/555555/ffffff?text=WALBERT" />
 
-                {/* Fornecedores em Destaque (Reais) */}
+                {/* Fornecedores */}
                 <section>
-                    <SectionHeader title="Fornecedores em Destaque" icon={<Users size={20} />} linkTo="/fornecedores" />
+                    <SectionHeader title={t('featuredSuppliers')} icon={<Users size={20} />} linkTo={`/${region}/fornecedores`} />
                     {homeSuppliers.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {homeSuppliers.map(supplier => (
@@ -300,9 +298,9 @@ const Home = () => {
                     )}
                 </section>
 
-                {/* Fundições em Destaque (Reais) */}
+                {/* Fundições */}
                 <section>
-                    <SectionHeader title="Fundições em Destaque" icon={<Factory size={20} />} linkTo="/fundicoes" />
+                    <SectionHeader title={t('featuredFoundries')} icon={<Factory size={20} />} linkTo={`/${region}/fundicoes`} />
                     {homeFoundries.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {homeFoundries.map(foundry => (
@@ -316,9 +314,9 @@ const Home = () => {
                     )}
                 </section>
 
-                {/* Materiais Técnicos com Popup */}
+                {/* Materiais Técnicos */}
                 <section>
-                    <SectionHeader title="Materiais Técnicos" icon={<Wrench size={20} />} linkTo="/artigos-tecnicos" />
+                    <SectionHeader title={t('technical')} icon={<Wrench size={20} />} linkTo={`/${region}/artigos-tecnicos`} />
                     {techMaterials.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {techMaterials.map(item => (
@@ -337,11 +335,11 @@ const Home = () => {
                     )}
                 </section>
 
-                <AdSpot position="home_middle_2" className="w-full bg-amber-100" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Automatic" />
+                <AdSpot position="home_middle_2" className="w-full bg-amber-100" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Automatic" />
 
-                {/* E-books com Popup */}
+                {/* E-books */}
                 <section>
-                    <SectionHeader title="E-books" icon={<Book size={20} />} linkTo="/ebooks" />
+                    <SectionHeader title={t('ebooks')} icon={<Book size={20} />} linkTo={`/${region}/ebooks`} />
                     {homeEbooks.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {homeEbooks.map(item => (
@@ -360,11 +358,11 @@ const Home = () => {
                     )}
                 </section>
 
-                <AdSpot position="home_final" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Sua+Empresa+Com..." />
+                <AdSpot position="home_final" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Sua+Empresa+Com..." />
 
-                {/* Eventos (Reais) */}
+                {/* Eventos */}
                 <section>
-                    <SectionHeader title="Eventos" icon={<Calendar size={20} />} linkTo="/eventos" />
+                    <SectionHeader title={t('events')} icon={<Calendar size={20} />} linkTo={`/${region}/eventos`} />
                     {homeEvents.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {homeEvents.map(item => (
@@ -384,7 +382,6 @@ const Home = () => {
         </div>
       </main>
 
-      {/* Modal de Captura de Leads Global */}
       <LeadCaptureModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

@@ -1,59 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { UploadCloud, FileText, Download, Loader2, CheckCircle, AlertCircle, Clock, Search, Mail } from 'lucide-react';
+import { UploadCloud, FileText, Download, Loader2, Trash2, Search, Calendar, Mail, Eye } from 'lucide-react';
 import clsx from 'clsx';
-
-interface Lead {
-  id: string;
-  email: string;
-  created_at: string;
-  source: string;
-}
+import { useRegion } from '../../contexts/RegionContext';
+import { useToast } from '../../contexts/ToastContext';
 
 const AdminMediaKit = () => {
+  const { region } = useRegion();
+  const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [currentFile, setCurrentFile] = useState<{ url: string; name: string } | null>(null);
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [currentFile, setCurrentFile] = useState<{ url: string; name: string; updated_at: string } | null>(null);
+  const [leads, setLeads] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Pagination
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 8;
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [region]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      // 1. Fetch Current Media Kit Info
+      // 1. Fetch Media Kit for CURRENT REGION
       const { data: settings } = await supabase
         .from('media_kit_settings')
         .select('*')
-        .eq('id', 1)
-        .single();
+        .eq('region', region)
+        .maybeSingle();
 
       if (settings && settings.file_url) {
-        setCurrentFile({ url: settings.file_url, name: settings.file_name || 'Mídia Kit Atual.pdf' });
+        setCurrentFile({ 
+            url: settings.file_url, 
+            name: settings.file_name || 'Mídia Kit.pdf',
+            updated_at: settings.updated_at
+        });
+      } else {
+        setCurrentFile(null);
       }
 
-      // 2. Fetch Leads (Source = media-kit)
+      // 2. Fetch Leads for CURRENT REGION
       const { data: leadsData } = await supabase
         .from('leads')
         .select('*')
         .eq('source', 'media-kit')
+        .eq('region', region)
         .order('created_at', { ascending: false });
 
-      if (leadsData) {
-        setLeads(leadsData);
-      }
+      if (leadsData) setLeads(leadsData);
 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      addToast('error', 'Erro ao carregar informações.');
     } finally {
       setLoading(false);
     }
@@ -61,63 +60,88 @@ const AdminMediaKit = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    
     const file = e.target.files[0];
+    
+    // Validação básica
     if (file.type !== 'application/pdf') {
-        alert('Por favor, envie apenas arquivos PDF.');
+        addToast('error', 'Apenas arquivos PDF são permitidos.');
         return;
     }
 
     setUploading(true);
+
     try {
         const fileExt = file.name.split('.').pop();
-        const fileName = `mediakit_${Date.now()}.${fileExt}`;
+        const fileName = `${region}_mediakit_${Date.now()}.${fileExt}`;
 
-        // 1. Upload to Storage
-        const { error: uploadError } = await supabase.storage
-            .from('media-kits')
-            .upload(fileName, file);
-
+        // Upload
+        const { error: uploadError } = await supabase.storage.from('media-kits').upload(fileName, file);
         if (uploadError) throw uploadError;
 
-        // 2. Get Public URL
-        const { data: { publicUrl } } = supabase.storage
-            .from('media-kits')
-            .getPublicUrl(fileName);
+        const { data: { publicUrl } } = supabase.storage.from('media-kits').getPublicUrl(fileName);
 
-        // 3. Update Settings Table
+        // Upsert Settings for this Region
         const { error: dbError } = await supabase
             .from('media_kit_settings')
-            .update({
+            .upsert({
+                region: region,
                 file_url: publicUrl,
                 file_name: file.name,
                 updated_at: new Date().toISOString()
-            })
-            .eq('id', 1);
+            }, { onConflict: 'region' });
 
         if (dbError) throw dbError;
 
-        setCurrentFile({ url: publicUrl, name: file.name });
-        alert('Mídia Kit atualizado com sucesso!');
-
-    } catch (error) {
-        console.error('Erro no upload:', error);
-        alert('Erro ao atualizar o arquivo.');
+        setCurrentFile({ 
+            url: publicUrl, 
+            name: file.name,
+            updated_at: new Date().toISOString()
+        });
+        addToast('success', 'Mídia Kit atualizado com sucesso!');
+    } catch (error: any) {
+        console.error(error);
+        addToast('error', 'Erro no upload: ' + error.message);
     } finally {
         setUploading(false);
     }
   };
 
-  // Filter & Pagination Logic
+  const handleRemoveFile = async () => {
+    if (!window.confirm('Tem certeza que deseja remover o Mídia Kit atual? O download ficará indisponível.')) return;
+
+    try {
+        const { error } = await supabase
+            .from('media_kit_settings')
+            .update({ file_url: null, file_name: null, updated_at: new Date().toISOString() })
+            .eq('region', region);
+
+        if (error) throw error;
+
+        setCurrentFile(null);
+        addToast('success', 'Arquivo removido.');
+    } catch (error) {
+        addToast('error', 'Erro ao remover arquivo.');
+    }
+  };
+
+  const handleDeleteLead = async (id: string) => {
+    if (!window.confirm('Excluir este lead do histórico?')) return;
+    try {
+        await supabase.from('leads').delete().eq('id', id);
+        setLeads(leads.filter(l => l.id !== id));
+        addToast('success', 'Lead excluído.');
+    } catch (error) {
+        addToast('error', 'Erro ao excluir lead.');
+    }
+  };
+
   const filteredLeads = leads.filter(l => l.email.toLowerCase().includes(searchTerm.toLowerCase()));
-  const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
-  const paginatedLeads = filteredLeads.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   return (
     <AdminLayout>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Mídia Kit</h1>
-        <p className="text-gray-500">Gerencie o arquivo PDF e visualize os downloads.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Mídia Kit ({region.toUpperCase()})</h1>
+        <p className="text-gray-500">Gerencie o arquivo PDF e visualize quem baixou o material na região {region === 'pt' ? 'Brasil' : region === 'mx' ? 'México' : 'Global'}.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -125,142 +149,144 @@ const AdminMediaKit = () => {
         {/* Left Column: File Management */}
         <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-                    <FileText size={20} className="text-primary" />
-                    Arquivo Atual
+                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <FileText size={20} className="text-primary" /> Arquivo Atual
                 </h3>
-
+                
                 {loading ? (
                     <div className="flex justify-center py-8"><Loader2 className="animate-spin text-primary" /></div>
                 ) : currentFile ? (
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4 relative group">
                         <div className="flex items-start gap-3">
-                            <div className="bg-blue-100 p-2 rounded text-blue-600">
+                            <div className="bg-white p-2 rounded border border-blue-100 text-red-500">
                                 <FileText size={24} />
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-blue-900 truncate" title={currentFile.name}>
-                                    {currentFile.name}
+                            <div className="flex-grow min-w-0">
+                                <p className="text-sm font-bold text-blue-900 truncate" title={currentFile.name}>{currentFile.name}</p>
+                                <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                                    <Calendar size={10} /> 
+                                    {new Date(currentFile.updated_at).toLocaleDateString()}
                                 </p>
-                                <a 
-                                    href={currentFile.url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
-                                >
-                                    <Download size={12} /> Baixar para testar
-                                </a>
                             </div>
-                            <CheckCircle size={18} className="text-green-500 flex-shrink-0" />
+                        </div>
+                        
+                        <div className="flex gap-2 mt-4">
+                            <a 
+                                href={currentFile.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex-1 bg-white border border-blue-200 text-blue-700 text-xs font-bold py-2 rounded hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Eye size={14} /> Visualizar
+                            </a>
+                            <button 
+                                onClick={handleRemoveFile}
+                                className="px-3 bg-white border border-red-200 text-red-600 rounded hover:bg-red-50 transition-colors"
+                                title="Remover Arquivo"
+                            >
+                                <Trash2 size={14} />
+                            </button>
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 mb-6 flex items-center gap-3 text-yellow-700">
-                        <AlertCircle size={20} />
-                        <span className="text-sm font-medium">Nenhum arquivo configurado.</span>
+                    <div className="bg-gray-50 border border-gray-200 border-dashed rounded-lg p-6 text-center mb-4">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 text-gray-400">
+                            <FileText size={24} />
+                        </div>
+                        <p className="text-sm text-gray-500 font-medium">Nenhum arquivo configurado.</p>
+                        <p className="text-xs text-gray-400 mt-1">O botão de download ficará indisponível no site.</p>
                     </div>
                 )}
 
-                <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Atualizar Arquivo (PDF)</label>
-                    <div className="relative">
-                        <input 
-                            type="file" 
-                            accept=".pdf"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                            id="mk-upload"
-                            disabled={uploading}
-                        />
-                        <label 
-                            htmlFor="mk-upload"
-                            className={clsx(
-                                "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors bg-gray-50/50",
-                                uploading ? "opacity-50 cursor-not-allowed" : ""
-                            )}
-                        >
-                            {uploading ? (
-                                <div className="flex flex-col items-center text-gray-500">
-                                    <Loader2 className="animate-spin mb-2" size={24} />
-                                    <span className="text-xs">Enviando...</span>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center text-gray-500">
-                                    <UploadCloud className="mb-2" size={24} />
-                                    <span className="text-xs font-bold">Clique para substituir</span>
-                                    <span className="text-[10px] text-gray-400 mt-1">Apenas arquivos PDF</span>
-                                </div>
-                            )}
-                        </label>
-                    </div>
+                <div className="relative">
+                    <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" id="mk-upload" disabled={uploading} />
+                    <label 
+                        htmlFor="mk-upload" 
+                        className={clsx(
+                            "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group",
+                            uploading && "opacity-50 cursor-not-allowed"
+                        )}
+                    >
+                        {uploading ? (
+                            <Loader2 className="animate-spin text-primary" size={24} />
+                        ) : (
+                            <>
+                                <UploadCloud className="text-gray-400 mb-2 group-hover:scale-110 transition-transform" size={24} />
+                                <span className="text-sm font-medium text-gray-600">
+                                    {currentFile ? 'Substituir PDF' : 'Enviar PDF'}
+                                </span>
+                                <span className="text-xs text-gray-400 mt-1">Máximo 50MB</span>
+                            </>
+                        )}
+                    </label>
+                </div>
+            </div>
+
+            {/* Stats Card */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <h3 className="font-bold text-gray-800 mb-2 text-sm uppercase tracking-wide">Total de Downloads</h3>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-primary">{leads.length}</span>
+                    <span className="text-xs text-gray-500">interessados</span>
                 </div>
             </div>
         </div>
 
-        {/* Right Column: Leads Table */}
+        {/* Right Column: Leads List */}
         <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-800">Downloads Realizados</h3>
-                        <p className="text-xs text-gray-500">Lista de interessados que baixaram o material.</p>
-                    </div>
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
+                <div className="p-5 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                        <Download size={20} className="text-primary" /> Histórico de Downloads
+                    </h3>
                     <div className="relative w-full sm:w-64">
-                        <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
                         <input 
                             type="text" 
                             placeholder="Buscar e-mail..." 
                             value={searchTerm}
-                            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                            className="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-primary"
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-primary"
                         />
+                        <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
                     </div>
                 </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-200">
-                                <th className="px-6 py-4">E-mail do Lead</th>
-                                <th className="px-6 py-4">Data do Download</th>
-                                <th className="px-6 py-4 text-right">Status</th>
+                
+                <div className="overflow-x-auto flex-grow">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 text-gray-500 border-b border-gray-200">
+                            <tr>
+                                <th className="p-4 font-semibold">E-mail</th>
+                                <th className="p-4 font-semibold">Data</th>
+                                <th className="p-4 text-right font-semibold">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
-                                <tr>
-                                    <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
-                                        <Loader2 className="animate-spin inline-block mr-2" size={16} /> Carregando...
-                                    </td>
-                                </tr>
-                            ) : paginatedLeads.length === 0 ? (
-                                <tr>
-                                    <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Mail size={32} className="text-gray-300" />
-                                            <p>Nenhum download registrado ainda.</p>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <tr><td colSpan={3} className="p-8 text-center"><Loader2 className="animate-spin inline mr-2" /> Carregando...</td></tr>
+                            ) : filteredLeads.length === 0 ? (
+                                <tr><td colSpan={3} className="p-12 text-center text-gray-500">Nenhum download registrado ainda.</td></tr>
                             ) : (
-                                paginatedLeads.map((lead) => (
-                                    <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="font-bold text-gray-900 text-sm">{lead.email}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">
+                                filteredLeads.map(l => (
+                                    <tr key={l.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="p-4">
                                             <div className="flex items-center gap-2">
-                                                <Clock size={14} className="text-gray-400" />
-                                                {new Date(lead.created_at).toLocaleDateString('pt-BR', {
-                                                    day: '2-digit', month: '2-digit', year: 'numeric',
-                                                    hour: '2-digit', minute: '2-digit'
-                                                })}
+                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                                    <Mail size={14} />
+                                                </div>
+                                                <span className="font-medium text-gray-900">{l.email}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-[10px] font-bold uppercase">
-                                                Capturado
-                                            </span>
+                                        <td className="p-4 text-gray-600">
+                                            {new Date(l.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <button 
+                                                onClick={() => handleDeleteLead(l.id)}
+                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                title="Excluir registro"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -268,31 +294,11 @@ const AdminMediaKit = () => {
                         </tbody>
                     </table>
                 </div>
-
-                {/* Pagination */}
-                {!loading && filteredLeads.length > 0 && (
-                    <div className="p-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-500">
-                        <span>
-                            Mostrando {((page - 1) * itemsPerPage) + 1} a {Math.min(page * itemsPerPage, filteredLeads.length)} de {filteredLeads.length}
-                        </span>
-                        <div className="flex gap-2">
-                            <button 
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Anterior
-                            </button>
-                            <button 
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages}
-                                className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Próximo
-                            </button>
-                        </div>
-                    </div>
-                )}
+                
+                {/* Footer / Pagination Placeholder */}
+                <div className="p-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 flex justify-between items-center">
+                    <span>Mostrando {filteredLeads.length} registros</span>
+                </div>
             </div>
         </div>
       </div>

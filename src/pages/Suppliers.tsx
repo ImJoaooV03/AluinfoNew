@@ -7,8 +7,10 @@ import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
 import { supabase } from '../lib/supabaseClient';
 import { useCategories } from '../hooks/useCategories';
+import { useRegion } from '../contexts/RegionContext';
 
 const Suppliers = () => {
+  const { region, t } = useRegion();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -21,7 +23,7 @@ const Suppliers = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchSuppliers();
-  }, []);
+  }, [region]); // Recarregar quando a região mudar
 
   const fetchSuppliers = async () => {
     try {
@@ -30,7 +32,8 @@ const Suppliers = () => {
         .from('suppliers')
         .select('*')
         .eq('status', 'active')
-        .order('is_verified', { ascending: false }) // Verificados primeiro
+        .eq('region', region) // Filtro por Região
+        .order('is_verified', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -49,7 +52,7 @@ const Suppliers = () => {
           isVerified: item.is_verified,
           rating: item.rating,
           status: item.status,
-          joinedDate: new Date(item.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+          joinedDate: new Date(item.created_at).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', year: 'numeric' })
         }));
         setSuppliers(mappedSuppliers);
         setFilteredSuppliers(mappedSuppliers);
@@ -77,7 +80,6 @@ const Suppliers = () => {
       results = results.filter(s => s.category === selectedCategory);
     }
 
-    // Ensure verified are always on top after filtering
     results.sort((a, b) => {
       if (a.isVerified && !b.isVerified) return -1;
       if (!a.isVerified && b.isVerified) return 1;
@@ -89,55 +91,37 @@ const Suppliers = () => {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-12">
-      
-      {/* Breadcrumbs */}
       <div className="bg-white border-b border-gray-200 mb-8">
         <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Link to="/" className="hover:text-primary transition-colors">Início</Link>
+                <Link to={`/${region}`} className="hover:text-primary transition-colors">{t('home')}</Link>
                 <ChevronRight size={12} />
-                <span className="text-gray-800 font-medium">Fornecedores</span>
+                <span className="text-gray-800 font-medium">{t('suppliers')}</span>
             </div>
         </div>
       </div>
 
       <main className="container mx-auto px-4">
-        
-        {/* Banner Topo Grande */}
         <div className="w-full mb-8">
             <div className="hidden md:block">
-                <AdSpot 
-                    position="top_large" 
-                    className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
-                />
+                <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333/fff?text=MAGMA" />
             </div>
             <div className="block md:hidden">
-                <AdSpot 
-                    position="top_large_mobile" 
-                    className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
-                />
+                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333/fff?text=MAGMA" />
             </div>
         </div>
 
-        {/* Page Header with Search */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4 border-b border-gray-200 pb-4">
             <div>
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                     <Users className="text-primary" size={32} />
-                    Guia de Fornecedores
+                    {t('suppliers')}
                 </h1>
-                <p className="text-sm text-gray-500 mt-1 pl-11">
-                    Encontre as melhores empresas e soluções para o setor de alumínio.
-                </p>
             </div>
-            
-            {/* Search Filter */}
             <div className="relative w-full md:w-72">
                 <input 
                     type="text" 
-                    placeholder="Buscar empresa, produto ou serviço..." 
+                    placeholder={t('search') + "..."}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-primary transition-colors shadow-sm"
@@ -147,11 +131,7 @@ const Suppliers = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            {/* Main Content */}
             <div className="lg:col-span-9">
-                
-                {/* Category Filters (Dynamic) */}
                 <div className="mb-8 flex flex-wrap gap-2">
                     <button 
                         onClick={() => setSelectedCategory(null)}
@@ -178,7 +158,6 @@ const Suppliers = () => {
                     ))}
                 </div>
 
-                {/* Suppliers Grid */}
                 {isLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[1, 2, 3, 4, 5, 6].map(i => (
@@ -197,29 +176,10 @@ const Suppliers = () => {
                             <Filter size={32} />
                         </div>
                         <h3 className="text-lg font-bold text-gray-800 mb-2">Nenhum fornecedor encontrado</h3>
-                        <p className="text-gray-500 text-sm">Tente ajustar seus termos de busca ou filtros.</p>
-                        <button 
-                            onClick={() => {setSearchTerm(''); setSelectedCategory(null);}}
-                            className="mt-4 text-primary font-bold text-sm hover:underline"
-                        >
-                            Limpar filtros
-                        </button>
-                    </div>
-                )}
-
-                {/* Pagination */}
-                {!isLoading && filteredSuppliers.length > 0 && (
-                    <div className="flex justify-center items-center gap-2 pt-12 mt-4 border-t border-gray-200">
-                        <button className="px-6 py-2.5 bg-white border border-gray-300 rounded-sm text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-primary hover:border-primary transition-all uppercase shadow-sm">
-                            Carregar Mais Fornecedores
-                        </button>
                     </div>
                 )}
             </div>
-
-            {/* Sidebar */}
             <SidebarAds />
-
         </div>
       </main>
     </div>

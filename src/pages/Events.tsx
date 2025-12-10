@@ -6,8 +6,10 @@ import { NewsItem } from '../types';
 import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
 import { supabase } from '../lib/supabaseClient';
+import { useRegion } from '../contexts/RegionContext';
 
 const Events = () => {
+  const { region, t } = useRegion();
   const [events, setEvents] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,7 +18,7 @@ const Events = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchEvents();
-  }, [filterType]);
+  }, [filterType, region]);
 
   const fetchEvents = async () => {
     try {
@@ -25,13 +27,14 @@ const Events = () => {
       let query = supabase
         .from('events')
         .select('*')
-        .neq('status', 'inactive');
+        .neq('status', 'inactive')
+        .eq('region', region); // Filtro por Região
 
-      // Filtrar por data baseado na aba selecionada
       const today = new Date().toISOString().split('T')[0];
       
       if (filterType === 'upcoming') {
-        query = query.gte('event_date', today).order('event_date', { ascending: true });
+        // Eventos futuros ou que terminam no futuro
+        query = query.or(`event_date.gte.${today},end_date.gte.${today}`).order('event_date', { ascending: true });
       } else {
         query = query.lt('event_date', today).order('event_date', { ascending: false });
       }
@@ -41,17 +44,32 @@ const Events = () => {
       if (error) throw error;
 
       if (data) {
-        const mappedEvents: NewsItem[] = data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          summary: item.description,
-          category: 'Evento',
-          date: new Date(item.event_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
-          location: item.location,
-          imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/100x100/png?text=Evento',
-          type: 'event',
-          linkUrl: item.link_url
-        }));
+        const mappedEvents: NewsItem[] = data.map((item: any) => {
+            // Formatação de Data (Intervalo)
+            const startDate = new Date(item.event_date);
+            const dateOptions: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
+            const locale = region === 'pt' ? 'pt-BR' : 'en-US';
+            let dateStr = startDate.toLocaleDateString(locale, dateOptions);
+
+            if (item.end_date) {
+                const endDate = new Date(item.end_date);
+                if (startDate.toDateString() !== endDate.toDateString()) {
+                    dateStr = `${startDate.toLocaleDateString(locale, { day: '2-digit', month: 'short' })} - ${endDate.toLocaleDateString(locale, dateOptions)}`;
+                }
+            }
+
+            return {
+                id: item.id,
+                title: item.title,
+                summary: item.description,
+                category: item.category || 'Evento',
+                date: dateStr,
+                location: item.location,
+                imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/100x100/png?text=Evento',
+                type: 'event',
+                linkUrl: item.link_url
+            };
+        });
         setEvents(mappedEvents);
       }
     } catch (err) {
@@ -68,55 +86,37 @@ const Events = () => {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-12">
-      
-      {/* Breadcrumbs */}
       <div className="bg-white border-b border-gray-200 mb-8">
         <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Link to="/" className="hover:text-primary transition-colors">Início</Link>
+                <Link to={`/${region}`} className="hover:text-primary transition-colors">{t('home')}</Link>
                 <ChevronRight size={12} />
-                <span className="text-gray-800 font-medium">Agenda de Eventos</span>
+                <span className="text-gray-800 font-medium">{t('events')}</span>
             </div>
         </div>
       </div>
 
       <main className="container mx-auto px-4">
-        
-        {/* Banner Topo Grande */}
         <div className="w-full mb-8">
             <div className="hidden md:block">
-                <AdSpot 
-                    position="top_large" 
-                    className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
-                />
+                <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333/fff?text=MAGMA" />
             </div>
             <div className="block md:hidden">
-                <AdSpot 
-                    position="top_large_mobile" 
-                    className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
-                />
+                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333/fff?text=MAGMA" />
             </div>
         </div>
 
-        {/* Page Header with Search */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4 border-b border-gray-200 pb-4">
             <div>
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                     <Calendar className="text-primary" size={32} />
-                    Agenda do Setor
+                    {t('events')}
                 </h1>
-                <p className="text-sm text-gray-500 mt-1 pl-11">
-                    Fique por dentro das principais feiras, congressos e workshops.
-                </p>
             </div>
-            
-            {/* Search Filter */}
             <div className="relative w-full md:w-64">
                 <input 
                     type="text" 
-                    placeholder="Buscar evento ou local..." 
+                    placeholder={t('search') + "..."}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-primary transition-colors"
@@ -126,11 +126,7 @@ const Events = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            {/* Main Content */}
             <div className="lg:col-span-9">
-                
-                {/* Tabs */}
                 <div className="flex gap-4 mb-6 border-b border-gray-200">
                     <button 
                         onClick={() => setFilterStatus('upcoming')}
@@ -140,7 +136,7 @@ const Events = () => {
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                     >
-                        Próximos Eventos
+                        Próximos
                     </button>
                     <button 
                         onClick={() => setFilterStatus('past')}
@@ -150,7 +146,7 @@ const Events = () => {
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                     >
-                        Eventos Realizados
+                        Realizados
                     </button>
                 </div>
 
@@ -162,27 +158,17 @@ const Events = () => {
                     </div>
                 ) : filteredEvents.length === 0 ? (
                     <div className="text-center py-20 bg-white border border-gray-200 rounded-sm">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                            <Calendar size={32} />
-                        </div>
-                        <p className="text-gray-500 font-medium">Nenhum evento encontrado nesta categoria.</p>
+                        <p className="text-gray-500 font-medium">Nenhum evento encontrado.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredEvents.map((item) => (
-                            <NewsCard 
-                                key={item.id} 
-                                item={item} 
-                                variant="event" 
-                            />
+                            <NewsCard key={item.id} item={item} variant="event" />
                         ))}
                     </div>
                 )}
             </div>
-
-            {/* Sidebar */}
             <SidebarAds />
-
         </div>
       </main>
     </div>

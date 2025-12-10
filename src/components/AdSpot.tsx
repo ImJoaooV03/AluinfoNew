@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useRegion } from '../contexts/RegionContext';
 
 interface AdSpotProps {
   position: 'top_large' | 'top_large_mobile' | 'home_middle_1' | 'home_middle_2' | 'home_final' | 'sidebar_1' | 'sidebar_2' | 'sidebar_3' | 'sidebar_4';
@@ -8,6 +9,7 @@ interface AdSpotProps {
 }
 
 const AdSpot: React.FC<AdSpotProps> = ({ position, className = "", fallbackImage }) => {
+  const { region } = useRegion();
   const [ad, setAd] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,12 +21,15 @@ const AdSpot: React.FC<AdSpotProps> = ({ position, className = "", fallbackImage
           .select('*')
           .eq('position', position)
           .eq('status', 'active')
+          .eq('region', region) // Region Filter
           .limit(1)
           .maybeSingle();
 
         if (!error && data) {
           setAd(data);
           await supabase.rpc('increment_ad_views', { ad_id: data.id });
+        } else {
+            setAd(null); // Reset if no ad found for this region
         }
       } catch (err) {
         console.error(`Erro ao buscar anúncio ${position}:`, err);
@@ -34,7 +39,7 @@ const AdSpot: React.FC<AdSpotProps> = ({ position, className = "", fallbackImage
     };
 
     fetchAd();
-  }, [position]);
+  }, [position, region]);
 
   const handleClick = async () => {
     if (ad?.id) {
@@ -42,12 +47,10 @@ const AdSpot: React.FC<AdSpotProps> = ({ position, className = "", fallbackImage
     }
   };
 
-  // Loading Skeleton
   if (loading) {
     return <div className={`bg-gray-100 animate-pulse rounded-sm min-h-[50px] ${className}`}></div>;
   }
 
-  // Fallback or Empty
   if (!ad) {
     if (fallbackImage) {
         return (
@@ -63,7 +66,6 @@ const AdSpot: React.FC<AdSpotProps> = ({ position, className = "", fallbackImage
     return null;
   }
 
-  // Active Ad
   return (
     <div className={`overflow-hidden rounded-sm shadow-sm hover:shadow-md transition-shadow ${className}`}>
       {ad.link_url ? (

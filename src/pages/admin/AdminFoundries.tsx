@@ -4,6 +4,7 @@ import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Search, Filter, Edit, Trash2, Plus, Loader2, AlertCircle, CheckCircle, XCircle, Factory } from 'lucide-react';
 import clsx from 'clsx';
+import { useRegion } from '../../contexts/RegionContext';
 
 interface Foundry {
   id: string;
@@ -18,6 +19,7 @@ interface Foundry {
 
 const AdminFoundries = () => {
   const navigate = useNavigate();
+  const { region } = useRegion();
   const [searchTerm, setSearchTerm] = useState('');
   const [foundries, setFoundries] = useState<Foundry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,7 @@ const AdminFoundries = () => {
 
   useEffect(() => {
     fetchFoundries();
-  }, []);
+  }, [region]);
 
   const fetchFoundries = async () => {
     try {
@@ -36,6 +38,7 @@ const AdminFoundries = () => {
       const { data, error } = await supabase
         .from('foundries')
         .select('*')
+        .eq('region', region) // FIX: Adicionado filtro por região
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -80,11 +83,11 @@ const AdminFoundries = () => {
     <AdminLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Fundições</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Fundições ({region.toUpperCase()})</h1>
           <p className="text-gray-500">Catálogo de fundições e plantas industriais.</p>
         </div>
         <button 
-          onClick={() => navigate('/admin/foundries/new')}
+          onClick={() => navigate(`/${region}/admin/foundries/new`)}
           className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
         >
           <Plus size={18} />
@@ -98,11 +101,6 @@ const AdminFoundries = () => {
             <div>
                 <h3 className="text-sm font-bold text-red-800">Erro ao carregar dados</h3>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
-                {error.includes('relation "foundries" does not exist') && (
-                    <p className="text-xs text-red-600 mt-2 font-mono bg-red-100 p-2 rounded">
-                        A tabela 'foundries' não existe. Execute o script de migração no Supabase.
-                    </p>
-                )}
             </div>
         </div>
       )}
@@ -166,7 +164,7 @@ const AdminFoundries = () => {
                         <p>Nenhuma fundição encontrada.</p>
                         {!error && (
                             <button 
-                                onClick={() => navigate('/admin/foundries/new')}
+                                onClick={() => navigate(`/${region}/admin/foundries/new`)}
                                 className="text-primary text-sm font-bold hover:underline mt-1"
                             >
                                 Cadastrar primeira fundição
@@ -226,7 +224,7 @@ const AdminFoundries = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
-                            onClick={() => navigate(`/admin/foundries/edit/${foundry.id}`)}
+                            onClick={() => navigate(`/${region}/admin/foundries/edit/${foundry.id}`)}
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" 
                             title="Editar"
                         >

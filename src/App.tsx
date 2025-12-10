@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -43,19 +43,20 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Contexts
 import { ToastProvider } from './contexts/ToastContext';
+import { RegionProvider } from './contexts/RegionContext';
 
 // Wrapper to conditionally render Header/Footer based on route
-const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+const LayoutWrapper = () => {
   const location = useLocation();
-  // Hide public header/footer on admin routes, including login
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  // Hide public header/footer on admin routes
+  const isAdminRoute = location.pathname.includes('/admin');
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] font-sans flex flex-col">
       {!isAdminRoute && <Header />}
       
       <div className={isAdminRoute ? "" : "flex-grow"}>
-        {children}
+        <Outlet />
       </div>
 
       {!isAdminRoute && <Footer />}
@@ -67,218 +68,215 @@ function App() {
   return (
     <ToastProvider>
       <Router>
-        <LayoutWrapper>
+        <RegionProvider>
           <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/noticias" element={<News />} />
-            <Route path="/artigos-tecnicos" element={<TechnicalArticles />} />
-            <Route path="/ebooks" element={<Ebooks />} />
-            <Route path="/eventos" element={<Events />} />
-            <Route path="/fornecedores" element={<Suppliers />} />
-            <Route path="/fundicoes" element={<Foundries />} />
-            <Route path="/fundicao/:id" element={<FoundryDetails />} />
-            <Route path="/fornecedor/:id" element={<SupplierDetails />} />
-            <Route path="/noticia/:id" element={<Article />} />
-            <Route path="/anuncie" element={<Advertise />} />
-            <Route path="/busca" element={<SearchResults />} />
+            {/* Redirect root to default region (PT) */}
+            <Route path="/" element={<Navigate to="/pt" replace />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<Login />} />
-            
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin/users" element={
-              <ProtectedRoute>
-                <AdminUsers />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin/content" element={
-              <ProtectedRoute>
-                <AdminContent />
-              </ProtectedRoute>
-            } />
+            {/* Region Routes Wrapper */}
+            <Route path="/:region" element={<LayoutWrapper />}>
+              
+              {/* Public Routes */}
+              <Route index element={<Home />} />
+              <Route path="noticias" element={<News />} />
+              <Route path="artigos-tecnicos" element={<TechnicalArticles />} />
+              <Route path="ebooks" element={<Ebooks />} />
+              <Route path="eventos" element={<Events />} />
+              <Route path="fornecedores" element={<Suppliers />} />
+              <Route path="fundicoes" element={<Foundries />} />
+              <Route path="fundicao/:id" element={<FoundryDetails />} />
+              <Route path="fornecedor/:id" element={<SupplierDetails />} />
+              <Route path="noticia/:id" element={<Article />} />
+              <Route path="anuncie" element={<Advertise />} />
+              <Route path="busca" element={<SearchResults />} />
 
-            <Route path="/admin/content/new" element={
-              <ProtectedRoute>
-                <NewsEditor />
-              </ProtectedRoute>
-            } />
+              {/* Admin Routes (Nested under region) */}
+              <Route path="admin">
+                <Route path="login" element={<Login />} />
+                
+                <Route index element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="users" element={
+                  <ProtectedRoute>
+                    <AdminUsers />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="content" element={
+                  <ProtectedRoute>
+                    <AdminContent />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/content/edit/:id" element={
-              <ProtectedRoute>
-                <NewsEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="content/new" element={
+                  <ProtectedRoute>
+                    <NewsEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Hero Carousel Routes */}
-            <Route path="/admin/hero" element={
-              <ProtectedRoute>
-                <AdminHeroCarousel />
-              </ProtectedRoute>
-            } />
+                <Route path="content/edit/:id" element={
+                  <ProtectedRoute>
+                    <NewsEditor />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/hero/new" element={
-              <ProtectedRoute>
-                <HeroSlideEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="hero" element={
+                  <ProtectedRoute>
+                    <AdminHeroCarousel />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/hero/edit/:id" element={
-              <ProtectedRoute>
-                <HeroSlideEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="hero/new" element={
+                  <ProtectedRoute>
+                    <HeroSlideEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Technical Materials Routes */}
-            <Route path="/admin/materials" element={
-              <ProtectedRoute>
-                <AdminTechnicalMaterials />
-              </ProtectedRoute>
-            } />
+                <Route path="hero/edit/:id" element={
+                  <ProtectedRoute>
+                    <HeroSlideEditor />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/materials/new" element={
-              <ProtectedRoute>
-                <TechnicalMaterialEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="materials" element={
+                  <ProtectedRoute>
+                    <AdminTechnicalMaterials />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/materials/edit/:id" element={
-              <ProtectedRoute>
-                <TechnicalMaterialEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="materials/new" element={
+                  <ProtectedRoute>
+                    <TechnicalMaterialEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Ebooks Routes */}
-            <Route path="/admin/ebooks" element={
-              <ProtectedRoute>
-                <AdminEbooks />
-              </ProtectedRoute>
-            } />
+                <Route path="materials/edit/:id" element={
+                  <ProtectedRoute>
+                    <TechnicalMaterialEditor />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/ebooks/new" element={
-              <ProtectedRoute>
-                <EbookEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="ebooks" element={
+                  <ProtectedRoute>
+                    <AdminEbooks />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/ebooks/edit/:id" element={
-              <ProtectedRoute>
-                <EbookEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="ebooks/new" element={
+                  <ProtectedRoute>
+                    <EbookEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Events Routes */}
-            <Route path="/admin/events" element={
-              <ProtectedRoute>
-                <AdminEvents />
-              </ProtectedRoute>
-            } />
+                <Route path="ebooks/edit/:id" element={
+                  <ProtectedRoute>
+                    <EbookEditor />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/events/new" element={
-              <ProtectedRoute>
-                <EventEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="events" element={
+                  <ProtectedRoute>
+                    <AdminEvents />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/events/edit/:id" element={
-              <ProtectedRoute>
-                <EventEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="events/new" element={
+                  <ProtectedRoute>
+                    <EventEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Leads Route */}
-            <Route path="/admin/leads" element={
-              <ProtectedRoute>
-                <AdminLeads />
-              </ProtectedRoute>
-            } />
+                <Route path="events/edit/:id" element={
+                  <ProtectedRoute>
+                    <EventEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Suppliers Routes */}
-            <Route path="/admin/suppliers" element={
-              <ProtectedRoute>
-                <AdminSuppliers />
-              </ProtectedRoute>
-            } />
+                <Route path="leads" element={
+                  <ProtectedRoute>
+                    <AdminLeads />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/suppliers/new" element={
-              <ProtectedRoute>
-                <SupplierEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="suppliers" element={
+                  <ProtectedRoute>
+                    <AdminSuppliers />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/suppliers/edit/:id" element={
-              <ProtectedRoute>
-                <SupplierEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="suppliers/new" element={
+                  <ProtectedRoute>
+                    <SupplierEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Foundries Routes */}
-            <Route path="/admin/foundries" element={
-              <ProtectedRoute>
-                <AdminFoundries />
-              </ProtectedRoute>
-            } />
+                <Route path="suppliers/edit/:id" element={
+                  <ProtectedRoute>
+                    <SupplierEditor />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/foundries/new" element={
-              <ProtectedRoute>
-                <FoundryEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="foundries" element={
+                  <ProtectedRoute>
+                    <AdminFoundries />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/foundries/edit/:id" element={
-              <ProtectedRoute>
-                <FoundryEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="foundries/new" element={
+                  <ProtectedRoute>
+                    <FoundryEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Ads Routes */}
-            <Route path="/admin/ads" element={
-              <ProtectedRoute>
-                <AdminAds />
-              </ProtectedRoute>
-            } />
+                <Route path="foundries/edit/:id" element={
+                  <ProtectedRoute>
+                    <FoundryEditor />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/ads/new" element={
-              <ProtectedRoute>
-                <AdEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="ads" element={
+                  <ProtectedRoute>
+                    <AdminAds />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/admin/ads/edit/:id" element={
-              <ProtectedRoute>
-                <AdEditor />
-              </ProtectedRoute>
-            } />
+                <Route path="ads/new" element={
+                  <ProtectedRoute>
+                    <AdEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Media Kit Route */}
-            <Route path="/admin/media-kit" element={
-              <ProtectedRoute>
-                <AdminMediaKit />
-              </ProtectedRoute>
-            } />
+                <Route path="ads/edit/:id" element={
+                  <ProtectedRoute>
+                    <AdEditor />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Categories Route */}
-            <Route path="/admin/categories" element={
-              <ProtectedRoute>
-                <AdminCategories />
-              </ProtectedRoute>
-            } />
+                <Route path="media-kit" element={
+                  <ProtectedRoute>
+                    <AdminMediaKit />
+                  </ProtectedRoute>
+                } />
 
-            {/* Admin Settings Route */}
-            <Route path="/admin/settings" element={
-              <ProtectedRoute>
-                <AdminSettings />
-              </ProtectedRoute>
-            } />
+                <Route path="categories" element={
+                  <ProtectedRoute>
+                    <AdminCategories />
+                  </ProtectedRoute>
+                } />
 
+                <Route path="settings" element={
+                  <ProtectedRoute>
+                    <AdminSettings />
+                  </ProtectedRoute>
+                } />
+              </Route>
+            </Route>
           </Routes>
-        </LayoutWrapper>
+        </RegionProvider>
       </Router>
     </ToastProvider>
   );

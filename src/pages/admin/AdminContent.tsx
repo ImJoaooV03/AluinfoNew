@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Search, Filter, Edit, Trash2, FilePlus, Eye, Calendar, Loader2, AlertCircle, Newspaper } from 'lucide-react';
+import { Search, Filter, Edit, Trash2, FilePlus, Eye, Calendar, Loader2, AlertCircle, Newspaper, Star, User } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import { useRegion } from '../../contexts/RegionContext';
 import clsx from 'clsx';
 
 interface NewsArticle {
@@ -11,15 +12,18 @@ interface NewsArticle {
   title: string;
   category: string;
   author: string;
+  author_avatar?: string;
   status: 'published' | 'draft' | 'scheduled';
   publish_date: string;
   views: number;
   created_at: string;
+  is_highlight: boolean;
 }
 
 const AdminContent = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { region } = useRegion();
   const [searchTerm, setSearchTerm] = useState('');
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +32,7 @@ const AdminContent = () => {
 
   useEffect(() => {
     fetchArticles();
-  }, []);
+  }, [region]);
 
   const fetchArticles = async () => {
     try {
@@ -38,6 +42,7 @@ const AdminContent = () => {
       const { data, error } = await supabase
         .from('news')
         .select('*')
+        .eq('region', region)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -85,11 +90,11 @@ const AdminContent = () => {
     <AdminLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Notícias</h1>
-          <p className="text-gray-500">Publique e edite as notícias, artigos técnicos e e-books do portal.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Notícias ({region.toUpperCase()})</h1>
+          <p className="text-gray-500">Publique e edite as notícias do portal {region === 'pt' ? 'Brasil' : region === 'mx' ? 'México' : 'Global'}.</p>
         </div>
         <button 
-          onClick={() => navigate('/admin/content/new')}
+          onClick={() => navigate(`/${region}/admin/content/new`)}
           className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
         >
           <FilePlus size={18} />
@@ -164,10 +169,10 @@ const AdminContent = () => {
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-2">
                         <Newspaper size={32} className="text-gray-300" />
-                        <p>Nenhuma notícia encontrada.</p>
+                        <p>Nenhuma notícia encontrada nesta região.</p>
                         {!error && (
                             <button 
-                                onClick={() => navigate('/admin/content/new')}
+                                onClick={() => navigate(`/${region}/admin/content/new`)}
                                 className="text-primary text-sm font-bold hover:underline mt-1"
                             >
                                 Criar a primeira notícia
@@ -180,11 +185,18 @@ const AdminContent = () => {
                 filteredArticles.map((article) => (
                   <tr key={article.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-gray-900 text-sm line-clamp-1 max-w-xs" title={article.title}>
-                          {article.title}
-                      </div>
-                      <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-                          <Eye size={10} /> {article.views || 0} visualizações
+                      <div className="flex items-start gap-2">
+                          {article.is_highlight && (
+                              <Star size={14} className="text-orange-500 fill-orange-500 flex-shrink-0 mt-0.5" title="Destaque" />
+                          )}
+                          <div>
+                            <div className="font-bold text-gray-900 text-sm line-clamp-1 max-w-xs" title={article.title}>
+                                {article.title}
+                            </div>
+                            <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                                <Eye size={10} /> {article.views || 0} visualizações
+                            </div>
+                          </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -192,8 +204,15 @@ const AdminContent = () => {
                           {article.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {article.author || '-'}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {article.author_avatar ? (
+                            <img src={article.author_avatar} className="w-6 h-6 rounded-full object-cover" alt="" />
+                        ) : (
+                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500"><User size={12} /></div>
+                        )}
+                        <span className="text-sm text-gray-600">{article.author || '-'}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={clsx(
@@ -219,7 +238,7 @@ const AdminContent = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
-                            onClick={() => navigate(`/admin/content/edit/${article.id}`)}
+                            onClick={() => navigate(`/${region}/admin/content/edit/${article.id}`)}
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" 
                             title="Editar"
                         >

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory, BookOpen, Mail, Book, Calendar, FileText, MonitorPlay, Tag } from 'lucide-react';
+import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory, BookOpen, Mail, Book, Calendar, FileText, MonitorPlay, Tag, Globe } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { useRegion } from '../../contexts/RegionContext';
 import clsx from 'clsx';
 
 interface AdminSidebarProps {
@@ -12,31 +13,32 @@ interface AdminSidebarProps {
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { region } = useRegion();
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/admin/login');
+      navigate(`/${region}/admin/login`);
     } catch (error) {
       console.error('Erro ao sair:', error);
     }
   };
 
   const menuItems = [
-    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/admin' },
-    { icon: <Users size={20} />, label: 'Usuários', path: '/admin/users' },
-    { icon: <Newspaper size={20} />, label: 'Notícias', path: '/admin/content' },
-    { icon: <BookOpen size={20} />, label: 'Materiais Técnicos', path: '/admin/materials' },
-    { icon: <Book size={20} />, label: 'E-books', path: '/admin/ebooks' },
-    { icon: <Calendar size={20} />, label: 'Eventos', path: '/admin/events' },
-    { icon: <Package size={20} />, label: 'Fornecedores', path: '/admin/suppliers' },
-    { icon: <Factory size={20} />, label: 'Fundições', path: '/admin/foundries' },
-    { icon: <Megaphone size={20} />, label: 'Publicidade', path: '/admin/ads' },
-    { icon: <FileText size={20} />, label: 'Mídia Kit', path: '/admin/media-kit' },
-    { icon: <Mail size={20} />, label: 'Leads', path: '/admin/leads' },
-    { icon: <MonitorPlay size={20} />, label: 'Carrossel Home', path: '/admin/hero' },
-    { icon: <Tag size={20} />, label: 'Categorias', path: '/admin/categories' }, // NOVO ITEM
-    { icon: <Settings size={20} />, label: 'Configurações', path: '/admin/settings' },
+    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: `/${region}/admin` },
+    { icon: <Users size={20} />, label: 'Usuários', path: `/${region}/admin/users` },
+    { icon: <Newspaper size={20} />, label: 'Notícias', path: `/${region}/admin/content` },
+    { icon: <BookOpen size={20} />, label: 'Materiais Técnicos', path: `/${region}/admin/materials` },
+    { icon: <Book size={20} />, label: 'E-books', path: `/${region}/admin/ebooks` },
+    { icon: <Calendar size={20} />, label: 'Eventos', path: `/${region}/admin/events` },
+    { icon: <Package size={20} />, label: 'Fornecedores', path: `/${region}/admin/suppliers` },
+    { icon: <Factory size={20} />, label: 'Fundições', path: `/${region}/admin/foundries` },
+    { icon: <Megaphone size={20} />, label: 'Publicidade', path: `/${region}/admin/ads` },
+    { icon: <FileText size={20} />, label: 'Mídia Kit', path: `/${region}/admin/media-kit` },
+    { icon: <Mail size={20} />, label: 'Leads', path: `/${region}/admin/leads` },
+    { icon: <MonitorPlay size={20} />, label: 'Carrossel Home', path: `/${region}/admin/hero` },
+    { icon: <Tag size={20} />, label: 'Categorias', path: `/${region}/admin/categories` },
+    { icon: <Settings size={20} />, label: 'Configurações', path: `/${region}/admin/settings` },
   ];
 
   return (
@@ -55,7 +57,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         {/* Logo Area */}
-        <div className="h-16 flex items-center px-6 border-b border-gray-100 flex-shrink-0">
+        <div className="h-16 flex items-center px-6 border-b border-gray-100 flex-shrink-0 justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
                 A
@@ -64,11 +66,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
+        {/* Region Indicator */}
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+            <Globe size={16} className="text-gray-500" />
+            <span className="text-xs font-bold text-gray-600 uppercase">
+                Gerenciando: <span className="text-primary">{region === 'pt' ? 'Brasil' : region === 'mx' ? 'México' : 'Global'}</span>
+            </span>
+        </div>
+
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1 scrollbar-thin scrollbar-thumb-gray-200">
           {menuItems.map((item) => {
-            const isActive = item.path === '/admin' 
-              ? location.pathname === '/admin'
+            const isActive = item.path === `/${region}/admin`
+              ? location.pathname === `/${region}/admin`
               : location.pathname.startsWith(item.path);
 
             return (
