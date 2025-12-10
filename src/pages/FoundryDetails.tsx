@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import AdSpot from '../components/AdSpot';
 import { supabase } from '../lib/supabaseClient';
 import { Foundry } from '../types';
+import { useRegion } from '../contexts/RegionContext';
 
 interface Capability {
   id: string;
@@ -19,6 +20,7 @@ interface GalleryImage {
 
 const FoundryDetails = () => {
   const { id } = useParams();
+  const { region, t } = useRegion();
   const [foundry, setFoundry] = useState<Foundry | null>(null);
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
@@ -30,7 +32,7 @@ const FoundryDetails = () => {
     if (id) {
         fetchFoundryData(id);
     }
-  }, [id]);
+  }, [id, region]);
 
   const fetchFoundryData = async (foundryId: string) => {
     try {
@@ -41,6 +43,7 @@ const FoundryDetails = () => {
             .from('foundries')
             .select('*')
             .eq('id', foundryId)
+            .eq('region', region) // CORREÇÃO: Filtro Estrito por Região
             .single();
 
         if (foundryError) throw foundryError;
@@ -59,7 +62,7 @@ const FoundryDetails = () => {
                 isVerified: foundryData.is_verified,
                 rating: foundryData.rating,
                 status: foundryData.status,
-                joinedDate: new Date(foundryData.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+                joinedDate: new Date(foundryData.created_at).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', year: 'numeric' }),
                 whatsapp: foundryData.whatsapp,
                 certification: foundryData.certification,
                 yearsExperience: foundryData.years_experience,
@@ -86,7 +89,7 @@ const FoundryDetails = () => {
 
     } catch (err) {
         console.error('Erro ao buscar detalhes:', err);
-        setError('Fundição não encontrada ou erro de conexão.');
+        setError('Fundição não encontrada ou indisponível nesta região.');
     } finally {
         setLoading(false);
     }
@@ -118,7 +121,7 @@ const FoundryDetails = () => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] p-4 text-center">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Fundição não encontrada</h2>
-            <Link to="/fundicoes" className="text-primary hover:underline">Voltar para a lista</Link>
+            <Link to={`/${region}/fundicoes`} className="text-primary hover:underline">Voltar para a lista</Link>
         </div>
     );
   }
@@ -130,9 +133,9 @@ const FoundryDetails = () => {
       <div className="bg-white border-b border-gray-200 mb-8">
         <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-gray-500 overflow-x-auto whitespace-nowrap">
-                <Link to="/" className="hover:text-primary transition-colors">Início</Link>
+                <Link to={`/${region}`} className="hover:text-primary transition-colors">{t('home')}</Link>
                 <ChevronRight size={12} />
-                <Link to="/fundicoes" className="hover:text-primary transition-colors">Fundições</Link>
+                <Link to={`/${region}/fundicoes`} className="hover:text-primary transition-colors">{t('foundries')}</Link>
                 <ChevronRight size={12} />
                 <span className="text-gray-800 font-medium truncate">{foundry.name}</span>
             </div>
@@ -147,14 +150,14 @@ const FoundryDetails = () => {
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
             <div className="block md:hidden">
                 <AdSpot 
                     position="top_large_mobile" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>

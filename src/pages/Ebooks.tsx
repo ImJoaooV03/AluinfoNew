@@ -7,8 +7,10 @@ import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
 import { supabase } from '../lib/supabaseClient';
 import LeadCaptureModal from '../components/LeadCaptureModal';
+import { useRegion } from '../contexts/RegionContext';
 
 const Ebooks = () => {
+  const { region, t } = useRegion();
   const [ebooks, setEbooks] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,7 +22,7 @@ const Ebooks = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchEbooks();
-  }, []);
+  }, [region]); // Recarregar ao mudar de região
 
   const fetchEbooks = async () => {
     try {
@@ -29,6 +31,7 @@ const Ebooks = () => {
         .from('ebooks')
         .select('*')
         .eq('status', 'published')
+        .eq('region', region) // CORREÇÃO: Filtro Estrito por Região
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -71,7 +74,6 @@ const Ebooks = () => {
         link.click();
         document.body.removeChild(link);
         
-        // Tentar incrementar contador (opcional, falha silenciosa se RPC não existir)
         try {
             await supabase.rpc('increment_ebook_downloads', { ebook_id: selectedMaterial.id });
         } catch (e) {
@@ -92,9 +94,9 @@ const Ebooks = () => {
       <div className="bg-white border-b border-gray-200 mb-8">
         <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Link to="/" className="hover:text-primary transition-colors">Início</Link>
+                <Link to={`/${region}`} className="hover:text-primary transition-colors">{t('home')}</Link>
                 <ChevronRight size={12} />
-                <span className="text-gray-800 font-medium">E-books</span>
+                <span className="text-gray-800 font-medium">{t('ebooks')}</span>
             </div>
         </div>
       </div>
@@ -114,7 +116,7 @@ const Ebooks = () => {
                 <AdSpot 
                     position="top_large_mobile" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
@@ -124,10 +126,12 @@ const Ebooks = () => {
             <div>
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                     <BookOpen className="text-primary" size={32} />
-                    Biblioteca de E-books
+                    {region === 'pt' ? 'Biblioteca de E-books' : region === 'mx' ? 'Biblioteca de Libros' : 'E-book Library'}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1 pl-11">
-                    Aprofunde seus conhecimentos com nossa coleção exclusiva de livros digitais.
+                    {region === 'pt' ? 'Aprofunde seus conhecimentos com nossa coleção exclusiva.' : 
+                     region === 'mx' ? 'Profundice sus conocimientos con nuestra colección exclusiva.' : 
+                     'Deepen your knowledge with our exclusive collection.'}
                 </p>
             </div>
             
@@ -135,7 +139,7 @@ const Ebooks = () => {
             <div className="relative w-full md:w-64">
                 <input 
                     type="text" 
-                    placeholder="Buscar por título..." 
+                    placeholder={t('search') + "..."}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-primary transition-colors"
@@ -157,7 +161,11 @@ const Ebooks = () => {
                     </div>
                 ) : filteredEbooks.length === 0 ? (
                     <div className="text-center py-20 bg-white border border-gray-200 rounded-sm">
-                        <p className="text-gray-500">Nenhum e-book encontrado.</p>
+                        <p className="text-gray-500">
+                            {region === 'pt' ? 'Nenhum e-book encontrado.' : 
+                             region === 'mx' ? 'No se encontraron libros electrónicos.' : 
+                             'No e-books found.'}
+                        </p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -169,16 +177,6 @@ const Ebooks = () => {
                                 onDownloadRequest={handleDownloadRequest}
                             />
                         ))}
-                    </div>
-                )}
-
-                {/* Pagination */}
-                {!loading && filteredEbooks.length > 0 && (
-                    <div className="flex justify-center items-center gap-2 pt-12 mt-4 border-t border-gray-200">
-                        <button className="px-6 py-2.5 bg-white border border-gray-300 rounded-sm text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-primary hover:border-primary transition-all uppercase shadow-sm flex items-center gap-2">
-                            <Download size={16} />
-                            Carregar Mais E-books
-                        </button>
                     </div>
                 )}
             </div>

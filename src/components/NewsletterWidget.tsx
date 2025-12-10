@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Mail, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import clsx from 'clsx';
+import { useRegion } from '../contexts/RegionContext';
 
 const NewsletterWidget = () => {
+  const { region, t } = useRegion();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -18,7 +20,7 @@ const NewsletterWidget = () => {
     
     if (!validateEmail(email)) {
         setStatus('error');
-        setMessage('E-mail inválido.');
+        setMessage(t('invalidEmail'));
         return;
     }
 
@@ -31,13 +33,14 @@ const NewsletterWidget = () => {
             .insert([{ 
                 email, 
                 source: 'newsletter',
+                region: region, // Salva a região
                 created_at: new Date().toISOString()
             }]);
 
         if (error) throw error;
 
         setStatus('success');
-        setMessage('Inscrição realizada!');
+        setMessage(t('subscriptionSuccess'));
         setEmail('');
         
         // Reset success message after 3 seconds
@@ -49,7 +52,7 @@ const NewsletterWidget = () => {
     } catch (err) {
         console.error('Newsletter error:', err);
         setStatus('error');
-        setMessage('Erro ao inscrever. Tente novamente.');
+        setMessage(t('subscriptionError'));
     } finally {
         setLoading(false);
     }
@@ -60,16 +63,16 @@ const NewsletterWidget = () => {
         <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mx-auto mb-3">
             <Mail size={20} />
         </div>
-        <h3 className="text-lg font-bold text-white mb-2">Newsletter</h3>
+        <h3 className="text-lg font-bold text-white mb-2">{t('newsletterTitle')}</h3>
         <p className="text-xs text-gray-400 mb-4 leading-relaxed">
-            Receba as últimas notícias do mercado de alumínio diretamente no seu e-mail.
+            {t('newsletterDesc')}
         </p>
         
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
             <div className="relative">
                 <input 
                     type="email" 
-                    placeholder="Seu melhor e-mail" 
+                    placeholder={t('emailPlaceholder')} 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading || status === 'success'}
@@ -93,10 +96,10 @@ const NewsletterWidget = () => {
                     <Loader2 size={14} className="animate-spin" />
                 ) : status === 'success' ? (
                     <>
-                        <CheckCircle size={14} /> Inscrito
+                        <CheckCircle size={14} /> {t('subscribed')}
                     </>
                 ) : (
-                    'Inscrever-se'
+                    t('subscribe')
                 )}
             </button>
 
@@ -113,7 +116,7 @@ const NewsletterWidget = () => {
         </form>
         
         <p className="text-[10px] text-gray-600 mt-3">
-            Política de privacidade garantida.
+            {t('privacyPolicy')}
         </p>
     </div>
   );

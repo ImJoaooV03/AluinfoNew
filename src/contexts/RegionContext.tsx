@@ -26,6 +26,7 @@ const translations = {
     download: 'Baixar',
     readMore: 'Ler Mais',
     subscribe: 'Inscrever-se',
+    subscribed: 'Inscrito',
     send: 'Enviar',
     cancel: 'Cancelar',
     save: 'Salvar',
@@ -35,12 +36,24 @@ const translations = {
     featuredSuppliers: 'Fornecedores em Destaque',
     featuredFoundries: 'Fundições em Destaque',
     
+    // Sidebar
+    lmeIndicators: 'Indicadores LME',
+    aluminum: 'ALUMÍNIO',
+    mostRead: 'Mais Lidas',
+    advertiseHere: 'Anuncie Aqui',
+    newsletterTitle: 'Newsletter',
+    newsletterDesc: 'Receba as últimas notícias do mercado de alumínio diretamente no seu e-mail.',
+    emailPlaceholder: 'Seu melhor e-mail',
+    privacyPolicy: 'Política de privacidade garantida.',
+    invalidEmail: 'E-mail inválido.',
+    subscriptionSuccess: 'Inscrição realizada!',
+    subscriptionError: 'Erro ao inscrever.',
+    
     // Footer
     quickLinks: 'Links Rápidos',
     services: 'Serviços',
     education: 'Educação',
     contact: 'Contato',
-    privacyPolicy: 'Política de Privacidade',
     termsOfUse: 'Termos de Uso',
     allRightsReserved: 'Todos os direitos reservados.',
     portalDescription: 'Portal especializado em notícias e informações do mercado de alumínio global.',
@@ -88,6 +101,7 @@ const translations = {
     download: 'Descargar',
     readMore: 'Leer Más',
     subscribe: 'Suscribirse',
+    subscribed: 'Suscrito',
     send: 'Enviar',
     cancel: 'Cancelar',
     save: 'Guardar',
@@ -97,12 +111,24 @@ const translations = {
     featuredSuppliers: 'Proveedores Destacados',
     featuredFoundries: 'Fundiciones Destacadas',
     
+    // Sidebar
+    lmeIndicators: 'Indicadores LME',
+    aluminum: 'ALUMINIO',
+    mostRead: 'Más Leídas',
+    advertiseHere: 'Anúnciate Aquí',
+    newsletterTitle: 'Boletín',
+    newsletterDesc: 'Reciba las últimas noticias del mercado del aluminio directamente en su correo.',
+    emailPlaceholder: 'Su mejor correo',
+    privacyPolicy: 'Política de privacidad garantizada.',
+    invalidEmail: 'Correo inválido.',
+    subscriptionSuccess: '¡Suscripción exitosa!',
+    subscriptionError: 'Error al suscribirse.',
+    
     // Footer
     quickLinks: 'Enlaces Rápidos',
     services: 'Servicios',
     education: 'Educación',
     contact: 'Contacto',
-    privacyPolicy: 'Política de Privacidad',
     termsOfUse: 'Términos de Uso',
     allRightsReserved: 'Todos los derechos reservados.',
     portalDescription: 'Portal especializado en noticias e información del mercado global del aluminio.',
@@ -150,6 +176,7 @@ const translations = {
     download: 'Download',
     readMore: 'Read More',
     subscribe: 'Subscribe',
+    subscribed: 'Subscribed',
     send: 'Send',
     cancel: 'Cancel',
     save: 'Save',
@@ -159,12 +186,24 @@ const translations = {
     featuredSuppliers: 'Featured Suppliers',
     featuredFoundries: 'Featured Foundries',
     
+    // Sidebar
+    lmeIndicators: 'LME Indicators',
+    aluminum: 'ALUMINUM',
+    mostRead: 'Most Read',
+    advertiseHere: 'Advertise Here',
+    newsletterTitle: 'Newsletter',
+    newsletterDesc: 'Get the latest aluminum market news directly in your inbox.',
+    emailPlaceholder: 'Your best email',
+    privacyPolicy: 'Privacy policy guaranteed.',
+    invalidEmail: 'Invalid email.',
+    subscriptionSuccess: 'Subscription successful!',
+    subscriptionError: 'Error subscribing.',
+    
     // Footer
     quickLinks: 'Quick Links',
     services: 'Services',
     education: 'Education',
     contact: 'Contact',
-    privacyPolicy: 'Privacy Policy',
     termsOfUse: 'Terms of Use',
     allRightsReserved: 'All rights reserved.',
     portalDescription: 'Portal specialized in news and information on the global aluminum market.',
@@ -204,8 +243,7 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Inicialização Lazy: Verifica a URL IMEDIATAMENTE para definir o estado inicial.
-  // Isso evita o "flash" de conteúdo PT quando se acessa /mx diretamente.
+  // Inicialização Lazy
   const [region, setRegion] = useState<Region>(() => {
     const pathSegments = window.location.pathname.split('/');
     const firstSegment = pathSegments[1] as Region;

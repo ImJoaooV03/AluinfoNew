@@ -5,9 +5,11 @@ import clsx from 'clsx';
 import AdSpot from '../components/AdSpot';
 import { supabase } from '../lib/supabaseClient';
 import { Supplier, Product } from '../types';
+import { useRegion } from '../contexts/RegionContext';
 
 const SupplierDetails = () => {
   const { id } = useParams();
+  const { region, t } = useRegion();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,17 +20,18 @@ const SupplierDetails = () => {
     if (id) {
         fetchSupplierData(id);
     }
-  }, [id]);
+  }, [id, region]);
 
   const fetchSupplierData = async (supplierId: string) => {
     try {
         setLoading(true);
         
-        // 1. Fetch Supplier Info
+        // 1. Fetch Supplier Info (Strict Region Filter)
         const { data: supplierData, error: supplierError } = await supabase
             .from('suppliers')
             .select('*')
             .eq('id', supplierId)
+            .eq('region', region) // CORREÇÃO: Filtro Estrito por Região
             .single();
 
         if (supplierError) throw supplierError;
@@ -42,13 +45,13 @@ const SupplierDetails = () => {
                 description: supplierData.description,
                 phone: supplierData.phone,
                 email: supplierData.email,
-                whatsapp: supplierData.whatsapp, // Mapear novo campo
+                whatsapp: supplierData.whatsapp,
                 location: supplierData.location,
                 website: supplierData.website,
                 isVerified: supplierData.is_verified,
                 rating: supplierData.rating,
                 status: supplierData.status,
-                joinedDate: new Date(supplierData.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+                joinedDate: new Date(supplierData.created_at).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', year: 'numeric' })
             });
         }
 
@@ -69,13 +72,13 @@ const SupplierDetails = () => {
                 category: p.category,
                 description: p.description,
                 type: p.type,
-                linkUrl: p.link_url // Mapear novo campo
+                linkUrl: p.link_url
             })));
         }
 
     } catch (err) {
         console.error('Erro ao buscar detalhes:', err);
-        setError('Fornecedor não encontrado ou erro de conexão.');
+        setError('Fornecedor não encontrado ou indisponível nesta região.');
     } finally {
         setLoading(false);
     }
@@ -85,25 +88,15 @@ const SupplierDetails = () => {
     if (!supplier) return '#';
     
     if (supplier.whatsapp) {
-        // Se for URL completa (http/https), usa como está
         if (supplier.whatsapp.startsWith('http')) {
             return supplier.whatsapp;
         }
-        
-        // Se for apenas números (ex: 5511999999999), formata para wa.me
-        // Remove tudo que não é dígito
         const cleanNumber = supplier.whatsapp.replace(/\D/g, '');
-        
-        // Verifica se tem um tamanho mínimo para ser um telefone (ex: > 8 dígitos)
         if (cleanNumber.length > 8) {
             return `https://wa.me/${cleanNumber}`;
         }
-        
-        // Caso contrário, retorna como está
         return supplier.whatsapp;
     }
-    
-    // Fallback para email se não tiver whatsapp
     return `mailto:${supplier.email}`;
   };
 
@@ -119,7 +112,7 @@ const SupplierDetails = () => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] p-4 text-center">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Fornecedor não encontrado</h2>
-            <Link to="/fornecedores" className="text-primary hover:underline">Voltar para a lista</Link>
+            <Link to={`/${region}/fornecedores`} className="text-primary hover:underline">Voltar para a lista</Link>
         </div>
     );
   }
@@ -135,9 +128,9 @@ const SupplierDetails = () => {
       <div className="bg-white border-b border-gray-200 mb-8">
         <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-gray-500 overflow-x-auto whitespace-nowrap">
-                <Link to="/" className="hover:text-primary transition-colors">Início</Link>
+                <Link to={`/${region}`} className="hover:text-primary transition-colors">{t('home')}</Link>
                 <ChevronRight size={12} />
-                <Link to="/fornecedores" className="hover:text-primary transition-colors">Fornecedores</Link>
+                <Link to={`/${region}/fornecedores`} className="hover:text-primary transition-colors">{t('suppliers')}</Link>
                 <ChevronRight size={12} />
                 <span className="text-gray-800 font-medium truncate">{supplier.name}</span>
             </div>
@@ -152,14 +145,14 @@ const SupplierDetails = () => {
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
             <div className="block md:hidden">
                 <AdSpot 
                     position="top_large_mobile" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
