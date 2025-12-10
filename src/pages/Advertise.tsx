@@ -1,10 +1,54 @@
-import React, { useEffect } from 'react';
-import { MessageSquare, Download, Globe, Target, Award, BarChart3, FileText, Zap, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { MessageSquare, Download, Globe, Target, Award, BarChart3, Zap } from 'lucide-react';
+import LeadCaptureModal from '../components/LeadCaptureModal';
+import { supabase } from '../lib/supabaseClient';
 
 const Advertise = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mediaKitUrl, setMediaKitUrl] = useState<string | null>(null);
+
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchMediaKitUrl();
   }, []);
+
+  const fetchMediaKitUrl = async () => {
+    try {
+      const { data } = await supabase
+        .from('media_kit_settings')
+        .select('file_url')
+        .eq('id', 1)
+        .single();
+      
+      if (data && data.file_url) {
+        setMediaKitUrl(data.file_url);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar mídia kit:', error);
+    }
+  };
+
+  const handleDownloadClick = () => {
+    if (!mediaKitUrl) {
+      alert('O Mídia Kit está sendo atualizado. Tente novamente mais tarde.');
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleLeadSubmit = async (email: string) => {
+    if (mediaKitUrl) {
+      const link = document.createElement('a');
+      link.href = mediaKitUrl;
+      link.target = '_blank';
+      link.download = 'AluInfo_Midia_Kit.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const whatsappLink = "https://api.whatsapp.com/send/?phone=5547996312867&text=Ol%C3%A1%21+Gostaria+de+saber+mais+sobre+oportunidades+de+an%C3%BAncio+no+Portal+Aluinfo.&type=phone_number&app_absent=0";
 
   return (
     <div className="min-h-screen font-sans">
@@ -25,11 +69,19 @@ const Advertise = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button className="w-full sm:w-auto bg-white text-primary hover:bg-gray-50 px-8 py-3.5 rounded-md font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group">
+            <a 
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto bg-white text-primary hover:bg-gray-50 px-8 py-3.5 rounded-md font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+            >
               <MessageSquare size={18} className="group-hover:scale-110 transition-transform" />
               Fale com um Especialista
-            </button>
-            <button className="w-full sm:w-auto bg-white/10 border border-white text-white hover:bg-white hover:text-primary px-8 py-3.5 rounded-md font-bold transition-all flex items-center justify-center gap-2 group backdrop-blur-sm">
+            </a>
+            <button 
+              onClick={handleDownloadClick}
+              className="w-full sm:w-auto bg-white/10 border border-white text-white hover:bg-white hover:text-primary px-8 py-3.5 rounded-md font-bold transition-all flex items-center justify-center gap-2 group backdrop-blur-sm"
+            >
               <Download size={18} className="group-hover:scale-110 transition-transform" />
               Baixe o Mídia Kit
             </button>
@@ -205,17 +257,34 @@ const Advertise = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button className="w-full sm:w-auto bg-white text-primary hover:bg-gray-50 px-8 py-3.5 rounded-md font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+            <a 
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto bg-white text-primary hover:bg-gray-50 px-8 py-3.5 rounded-md font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            >
               <MessageSquare size={18} />
               Fale com um Especialista
-            </button>
-            <button className="w-full sm:w-auto bg-white/10 border border-white text-white hover:bg-white hover:text-primary px-8 py-3.5 rounded-md font-bold transition-all flex items-center justify-center gap-2 backdrop-blur-sm">
+            </a>
+            <button 
+              onClick={handleDownloadClick}
+              className="w-full sm:w-auto bg-white/10 border border-white text-white hover:bg-white hover:text-primary px-8 py-3.5 rounded-md font-bold transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
+            >
               <Download size={18} />
               Baixe o Mídia Kit
             </button>
           </div>
         </div>
       </section>
+
+      {/* Lead Capture Modal */}
+      <LeadCaptureModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleLeadSubmit}
+        title="Mídia Kit AluInfo 2025"
+        source="media-kit"
+      />
 
     </div>
   );

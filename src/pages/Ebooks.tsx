@@ -6,7 +6,7 @@ import { NewsItem } from '../types';
 import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
 import { supabase } from '../lib/supabaseClient';
-import DownloadModal from '../components/DownloadModal';
+import LeadCaptureModal from '../components/LeadCaptureModal';
 
 const Ebooks = () => {
   const [ebooks, setEbooks] = useState<NewsItem[]>([]);
@@ -26,10 +26,9 @@ const Ebooks = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('technical_materials')
+        .from('ebooks')
         .select('*')
         .eq('status', 'published')
-        .eq('category', 'E-book')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -41,6 +40,7 @@ const Ebooks = () => {
           summary: item.description,
           category: item.category,
           date: new Date(item.created_at).getFullYear().toString(),
+          author: item.author,
           imageUrl: item.cover_url || '',
           downloads: item.downloads,
           fileUrl: item.file_url,
@@ -61,8 +61,7 @@ const Ebooks = () => {
   };
 
   const handleLeadSubmit = async (email: string) => {
-    // A lógica de salvar no banco agora está DENTRO do DownloadModal
-    
+    // Disparar o download físico
     if (selectedMaterial?.fileUrl) {
         const link = document.createElement('a');
         link.href = selectedMaterial.fileUrl;
@@ -71,6 +70,13 @@ const Ebooks = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        // Tentar incrementar contador (opcional, falha silenciosa se RPC não existir)
+        try {
+            await supabase.rpc('increment_ebook_downloads', { ebook_id: selectedMaterial.id });
+        } catch (e) {
+            // Ignora erro se RPC não existir
+        }
     }
   };
 
@@ -101,14 +107,14 @@ const Ebooks = () => {
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
             <div className="block md:hidden">
                 <AdSpot 
                     position="top_large_mobile" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
                 />
             </div>
         </div>
@@ -183,8 +189,8 @@ const Ebooks = () => {
         </div>
       </main>
 
-      {/* Download Modal */}
-      <DownloadModal 
+      {/* Lead Capture Modal */}
+      <LeadCaptureModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleLeadSubmit}

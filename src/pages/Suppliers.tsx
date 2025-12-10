@@ -1,30 +1,66 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { suppliers } from '../data/mockData';
 import SupplierCard from '../components/SupplierCard';
-import { Search, ChevronRight, Users, Filter } from 'lucide-react';
+import { Search, ChevronRight, Users, Filter, Loader2 } from 'lucide-react';
 import { Supplier } from '../types';
 import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
+import { supabase } from '../lib/supabaseClient';
 
 const Suppliers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>(suppliers);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Extract unique categories
-  const categories = Array.from(new Set(suppliers.map(s => s.category))).sort();
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    // Simulate loading
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    fetchSuppliers();
   }, []);
 
+  const fetchSuppliers = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .eq('status', 'active')
+        .order('is_verified', { ascending: false }) // Verificados primeiro
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedSuppliers: Supplier[] = data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          logoUrl: item.logo_url || '',
+          category: item.category,
+          description: item.description,
+          phone: item.phone,
+          email: item.email,
+          location: item.location,
+          website: item.website,
+          isVerified: item.is_verified,
+          rating: item.rating,
+          status: item.status,
+          joinedDate: new Date(item.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+        }));
+        setSuppliers(mappedSuppliers);
+        setFilteredSuppliers(mappedSuppliers);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar fornecedores:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Extract unique categories from real data
+  const categories = Array.from(new Set(suppliers.map(s => s.category))).sort();
+
   useEffect(() => {
-    // Create a copy to avoid mutating the original data during sort
     let results = [...suppliers];
 
     if (searchTerm) {
@@ -40,15 +76,15 @@ const Suppliers = () => {
       results = results.filter(s => s.category === selectedCategory);
     }
 
-    // Sort: Verified suppliers first
+    // Ensure verified are always on top after filtering
     results.sort((a, b) => {
       if (a.isVerified && !b.isVerified) return -1;
       if (!a.isVerified && b.isVerified) return 1;
-      return 0; // Maintain original order if both are verified or both are not
+      return 0;
     });
 
     setFilteredSuppliers(results);
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, suppliers]);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-12">
@@ -66,17 +102,15 @@ const Suppliers = () => {
 
       <main className="container mx-auto px-4">
         
-        {/* Banner Topo Grande (Global) - Desktop & Mobile Split */}
+        {/* Banner Topo Grande */}
         <div className="w-full mb-8">
-            {/* Desktop Version */}
             <div className="hidden md:block">
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
-            {/* Mobile Version */}
             <div className="block md:hidden">
                 <AdSpot 
                     position="top_large_mobile" 

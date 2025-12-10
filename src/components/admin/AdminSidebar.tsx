@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory, BookOpen, Mail } from 'lucide-react';
+import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory, BookOpen, Mail, Book, Calendar, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import clsx from 'clsx';
 
@@ -27,10 +27,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
     { icon: <Users size={20} />, label: 'Usuários', path: '/admin/users' },
     { icon: <Newspaper size={20} />, label: 'Notícias', path: '/admin/content' },
     { icon: <BookOpen size={20} />, label: 'Materiais Técnicos', path: '/admin/materials' },
+    { icon: <Book size={20} />, label: 'E-books', path: '/admin/ebooks' },
+    { icon: <Calendar size={20} />, label: 'Eventos', path: '/admin/events' },
     { icon: <Package size={20} />, label: 'Fornecedores', path: '/admin/suppliers' },
     { icon: <Factory size={20} />, label: 'Fundições', path: '/admin/foundries' },
     { icon: <Megaphone size={20} />, label: 'Publicidade', path: '/admin/ads' },
-    { icon: <Mail size={20} />, label: 'Leads', path: '/admin/leads' }, // Movido para cá
+    { icon: <FileText size={20} />, label: 'Mídia Kit', path: '/admin/media-kit' }, // Novo Item
+    { icon: <Mail size={20} />, label: 'Leads', path: '/admin/leads' },
     { icon: <Settings size={20} />, label: 'Configurações', path: '/admin/settings' },
   ];
 
@@ -46,12 +49,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Sidebar Container */}
       <aside className={clsx(
-        // Mobile: fixed inset-y-0 (ocupa altura total da tela)
-        // Desktop: static (ocupa altura do pai flex container, que é h-screen)
         "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col h-full",
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        {/* Logo Area - Altura fixa */}
+        {/* Logo Area */}
         <div className="h-16 flex items-center px-6 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
@@ -61,7 +62,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Navigation - Ocupa o espaço restante (flex-1) e rola internamente se necessário */}
+        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1 scrollbar-thin scrollbar-thumb-gray-200">
           {menuItems.map((item) => {
             const isActive = item.path === '/admin' 
@@ -87,7 +88,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
           })}
         </nav>
 
-        {/* Footer Actions - Fixo no fundo (flex-shrink-0) */}
+        {/* Footer Actions */}
         <div className="p-4 border-t border-gray-100 flex-shrink-0 bg-white">
           <button 
             onClick={handleLogout}

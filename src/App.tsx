@@ -12,6 +12,8 @@ import SupplierDetails from './pages/SupplierDetails';
 import Foundries from './pages/Foundries';
 import FoundryDetails from './pages/FoundryDetails';
 import Advertise from './pages/Advertise';
+import Events from './pages/Events';
+import SearchResults from './pages/SearchResults';
 
 // Admin Pages
 import Login from './pages/admin/Login';
@@ -27,7 +29,13 @@ import AdminAds from './pages/admin/AdminAds';
 import AdEditor from './pages/admin/AdEditor';
 import AdminTechnicalMaterials from './pages/admin/AdminTechnicalMaterials';
 import TechnicalMaterialEditor from './pages/admin/TechnicalMaterialEditor';
-import AdminLeads from './pages/admin/AdminLeads'; // Novo
+import AdminLeads from './pages/admin/AdminLeads';
+import AdminEbooks from './pages/admin/AdminEbooks';
+import EbookEditor from './pages/admin/EbookEditor';
+import AdminEvents from './pages/admin/AdminEvents';
+import EventEditor from './pages/admin/EventEditor';
+import AdminSettings from './pages/admin/AdminSettings';
+import AdminMediaKit from './pages/admin/AdminMediaKit'; // Nova Importação
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Wrapper to conditionally render Header/Footer based on route
@@ -59,12 +67,14 @@ function App() {
           <Route path="/noticias" element={<News />} />
           <Route path="/artigos-tecnicos" element={<TechnicalArticles />} />
           <Route path="/ebooks" element={<Ebooks />} />
+          <Route path="/eventos" element={<Events />} />
           <Route path="/fornecedores" element={<Suppliers />} />
           <Route path="/fundicoes" element={<Foundries />} />
           <Route path="/fundicao/:id" element={<FoundryDetails />} />
           <Route path="/fornecedor/:id" element={<SupplierDetails />} />
           <Route path="/noticia/:id" element={<Article />} />
           <Route path="/anuncie" element={<Advertise />} />
+          <Route path="/busca" element={<SearchResults />} />
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<Login />} />
@@ -118,7 +128,45 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* Admin Leads Route (Novo) */}
+          {/* Admin Ebooks Routes */}
+          <Route path="/admin/ebooks" element={
+            <ProtectedRoute>
+              <AdminEbooks />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/ebooks/new" element={
+            <ProtectedRoute>
+              <EbookEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/ebooks/edit/:id" element={
+            <ProtectedRoute>
+              <EbookEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Events Routes */}
+          <Route path="/admin/events" element={
+            <ProtectedRoute>
+              <AdminEvents />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/events/new" element={
+            <ProtectedRoute>
+              <EventEditor />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/events/edit/:id" element={
+            <ProtectedRoute>
+              <EventEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Leads Route */}
           <Route path="/admin/leads" element={
             <ProtectedRoute>
               <AdminLeads />
@@ -179,6 +227,20 @@ function App() {
           <Route path="/admin/ads/edit/:id" element={
             <ProtectedRoute>
               <AdEditor />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Media Kit Route (NOVO) */}
+          <Route path="/admin/media-kit" element={
+            <ProtectedRoute>
+              <AdminMediaKit />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Settings Route */}
+          <Route path="/admin/settings" element={
+            <ProtectedRoute>
+              <AdminSettings />
             </ProtectedRoute>
           } />
 

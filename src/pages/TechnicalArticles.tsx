@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import NewsCard from '../components/NewsCard';
-import { Search, ChevronRight, Wrench, Loader2 } from 'lucide-react';
+import { Search, ChevronRight, Wrench } from 'lucide-react';
 import { NewsItem } from '../types';
 import AdSpot from '../components/AdSpot';
 import SidebarAds from '../components/SidebarAds';
 import { supabase } from '../lib/supabaseClient';
-import DownloadModal from '../components/DownloadModal';
+import LeadCaptureModal from '../components/LeadCaptureModal';
 
 const TechnicalArticles = () => {
   const [materials, setMaterials] = useState<NewsItem[]>([]);
@@ -61,9 +61,7 @@ const TechnicalArticles = () => {
   };
 
   const handleLeadSubmit = async (email: string) => {
-    // A lógica de salvar no banco agora está DENTRO do DownloadModal
-    // Aqui apenas disparamos o download físico
-    
+    // Disparar o download físico
     if (selectedMaterial?.fileUrl) {
         const link = document.createElement('a');
         link.href = selectedMaterial.fileUrl;
@@ -72,9 +70,6 @@ const TechnicalArticles = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        // Incrementar contador de downloads (opcional)
-        // await supabase.rpc('increment_downloads', { material_id: selectedMaterial.id });
     }
   };
 
@@ -104,7 +99,7 @@ const TechnicalArticles = () => {
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
             <div className="block md:hidden">
@@ -184,8 +179,8 @@ const TechnicalArticles = () => {
         </div>
       </main>
 
-      {/* Download Modal */}
-      <DownloadModal 
+      {/* Lead Capture Modal */}
+      <LeadCaptureModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleLeadSubmit}

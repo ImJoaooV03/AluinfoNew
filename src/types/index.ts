@@ -11,7 +11,8 @@ export interface NewsItem {
   pages?: number;
   location?: string;
   type?: 'news' | 'technical' | 'ebook' | 'event';
-  fileUrl?: string; // Novo campo para o link do arquivo (PDF/Doc)
+  fileUrl?: string;
+  linkUrl?: string; // Novo campo para links externos (Eventos, etc)
 }
 
 export interface AdBanner {
@@ -21,7 +22,7 @@ export interface AdBanner {
 }
 
 export interface Article extends NewsItem {
-  content: string; // HTML or Markdown content
+  content: string;
   subtitle?: string;
   readTime?: string;
   authorAvatar?: string;
@@ -37,6 +38,7 @@ export interface Supplier {
   description: string;
   phone: string;
   email: string;
+  whatsapp?: string;
   location: string;
   website?: string;
   isVerified?: boolean;
@@ -49,16 +51,22 @@ export interface Foundry {
   id: string;
   name: string;
   logoUrl: string;
-  category: string; // e.g., "Injeção sob Pressão", "Coquilha", "Areia"
+  category: string;
   description: string;
   phone: string;
   email: string;
+  whatsapp?: string;
   location: string;
   website?: string;
   isVerified?: boolean;
   rating?: number;
   status?: 'active' | 'inactive';
   joinedDate?: string;
+  // Novos campos de métricas
+  certification?: string;
+  yearsExperience?: string;
+  monthlyCapacity?: string;
+  marketReach?: string;
 }
 
 export interface Product {
@@ -68,7 +76,8 @@ export interface Product {
   price?: string;
   category: string;
   description: string;
-  type?: 'product' | 'service'; // Added type to distinguish
+  type?: 'product' | 'service';
+  linkUrl?: string;
 }
 
 export interface SupplierDocument {

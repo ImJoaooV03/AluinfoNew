@@ -1,6 +1,6 @@
 import React from 'react';
 import { NewsItem } from '../types';
-import { Calendar, User, MapPin, FileText, Download } from 'lucide-react';
+import { Calendar, User, MapPin, FileText, Download, ExternalLink } from 'lucide-react';
 
 interface NewsCardProps {
   item: NewsItem;
@@ -63,7 +63,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
         <div className="flex gap-4 mb-4">
             <div className="w-1/3 flex-shrink-0">
                 <img 
-                    src={item.imageUrl || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa'} 
+                    src={item.imageUrl || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa'} 
                     alt={item.title} 
                     className="w-full h-auto shadow-sm object-cover aspect-[3/4] rounded-sm" 
                 />
@@ -104,35 +104,65 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
 
   if (variant === 'event') {
     return (
-        <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col h-full hover:shadow-md transition-shadow relative">
-            <span className="absolute top-4 left-4 bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded">Evento</span>
+        <div className="bg-white border border-gray-200 rounded-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow group">
             
-            <div className="mt-8 mb-3">
+            {/* Image Area - Full Width */}
+            <div className="relative w-full aspect-[16/9] bg-gray-100 overflow-hidden border-b border-gray-100">
                  {item.imageUrl ? (
-                     <img src={item.imageUrl} alt={item.title} className="h-12 object-contain mb-2" />
+                     <img 
+                        src={item.imageUrl} 
+                        alt={item.title} 
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" 
+                     />
                  ) : (
-                     <div className="h-12 w-full bg-gray-50 mb-2"></div>
+                     <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                        <Calendar size={32} className="text-gray-300" />
+                     </div>
                  )}
+                 {/* Badge */}
+                 <div className="absolute top-3 left-3">
+                    <span className="bg-gray-200/90 backdrop-blur-sm text-gray-700 text-[10px] font-bold px-2 py-1 rounded uppercase shadow-sm">
+                        Evento
+                    </span>
+                 </div>
             </div>
 
-            <h3 className="font-bold text-sm text-gray-800 mb-2">{item.title}</h3>
-            <p className="text-xs text-gray-500 mb-4 line-clamp-3 flex-grow">{item.summary}</p>
-            
-            <div className="space-y-1 mb-4">
-                <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                    <MapPin size={12} />
-                    <span>{item.location}</span>
+            {/* Content Area */}
+            <div className="p-5 flex flex-col flex-grow">
+                <h3 className="font-bold text-base text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                    {item.title}
+                </h3>
+                <p className="text-xs text-gray-500 mb-4 line-clamp-3 flex-grow leading-relaxed">
+                    {item.summary}
+                </p>
+                
+                <div className="space-y-2 mb-5">
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <MapPin size={14} className="text-primary" />
+                        <span className="truncate">{item.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <Calendar size={14} className="text-primary" />
+                        <span>{item.date}</span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                    <Calendar size={12} />
-                    <span>{item.date}</span>
-                </div>
-            </div>
 
-            <div className="flex justify-end mt-auto">
-                 <button className="bg-primary/80 hover:bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded transition-colors">
-                    Saiba mais
-                </button>
+                <div className="flex justify-end mt-auto">
+                     {item.linkUrl ? (
+                        <a 
+                            href={item.linkUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors flex items-center gap-1.5 shadow-sm"
+                        >
+                            Saiba mais <ExternalLink size={12} />
+                        </a>
+                     ) : (
+                        <button disabled className="bg-gray-100 text-gray-400 text-xs font-bold px-4 py-2 rounded-sm cursor-default">
+                            Em breve
+                        </button>
+                     )}
+                </div>
             </div>
         </div>
     )
