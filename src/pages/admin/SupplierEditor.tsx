@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Save, ArrowLeft, Loader2, AlertCircle, Building2, MapPin, Globe, Mail, Phone, ShieldCheck, Package, Plus, X, Edit2, Trash2, UploadCloud, Image as ImageIcon, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 import { useCategories } from '../../hooks/useCategories';
+import { useToast } from '../../contexts/ToastContext';
 
 interface ProductItem {
   id?: string;
@@ -24,6 +25,7 @@ const SupplierEditor = () => {
   const { id } = useParams();
   const isEditing = !!id;
   const { categories, loading: categoriesLoading } = useCategories('supplier');
+  const { addToast } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -114,6 +116,7 @@ const SupplierEditor = () => {
     } catch (err: any) {
       console.error('Erro ao buscar dados:', err);
       setError('Falha ao carregar dados do fornecedor.');
+      addToast('error', 'Erro ao carregar dados.');
     } finally {
       setFetching(false);
     }
@@ -150,9 +153,10 @@ const SupplierEditor = () => {
         .getPublicUrl(fileName);
         
       setFormData(prev => ({ ...prev, logo_url: publicUrl }));
+      addToast('success', 'Logo enviada com sucesso!');
     } catch (err) {
       console.error(err);
-      alert('Erro ao enviar logotipo.');
+      addToast('error', 'Erro ao enviar logotipo.');
     } finally {
       setUploadingLogo(false);
     }
@@ -204,9 +208,10 @@ const SupplierEditor = () => {
         .getPublicUrl(fileName);
         
       setCurrentProduct(prev => prev ? ({ ...prev, image_url: publicUrl }) : null);
+      addToast('success', 'Imagem do produto enviada!');
     } catch (err) {
       console.error(err);
-      alert('Erro ao enviar imagem do produto.');
+      addToast('error', 'Erro ao enviar imagem do produto.');
     } finally {
       setProductUploading(false);
     }
@@ -215,7 +220,7 @@ const SupplierEditor = () => {
   const handleSaveProduct = () => {
     if (!currentProduct) return;
     if (!currentProduct.name) {
-        alert("O nome do produto é obrigatório");
+        addToast('error', 'O nome do produto é obrigatório');
         return;
     }
 
@@ -304,10 +309,12 @@ const SupplierEditor = () => {
           if (deleteError) throw deleteError;
       }
 
+      addToast('success', isEditing ? 'Fornecedor atualizado!' : 'Fornecedor cadastrado!');
       navigate('/admin/suppliers');
     } catch (err: any) {
       console.error('Erro ao salvar:', err);
       setError(err.message || 'Erro ao salvar fornecedor.');
+      addToast('error', 'Erro ao salvar fornecedor.');
     } finally {
       setLoading(false);
     }
@@ -685,7 +692,6 @@ const SupplierEditor = () => {
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, logo_url: '' }))}
                         className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
-                        title="Remover logo"
                     >
                         <Trash2 size={14} />
                     </button>

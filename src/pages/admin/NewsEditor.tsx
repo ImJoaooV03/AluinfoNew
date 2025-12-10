@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Save, ArrowLeft, Image as ImageIcon, Loader2, AlertCircle, Calendar, User, Tag, FileText, AlignLeft, Info, UploadCloud, Bold, Italic, Heading, List, Link as LinkIcon, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import { useCategories } from '../../hooks/useCategories';
+import { useToast } from '../../contexts/ToastContext';
 
 // Interface estrita alinhada com o banco de dados
 interface NewsPayload {
@@ -26,6 +27,7 @@ const NewsEditor = () => {
   const { id } = useParams();
   const isEditing = !!id;
   const { categories, loading: categoriesLoading } = useCategories('news');
+  const { addToast } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -88,6 +90,7 @@ const NewsEditor = () => {
     } catch (err: any) {
       console.error('Erro ao buscar artigo:', err);
       setError('Falha ao carregar dados do artigo.');
+      addToast('error', 'Erro ao carregar notícia.');
     } finally {
       setFetching(false);
     }
@@ -130,9 +133,10 @@ const NewsEditor = () => {
         .getPublicUrl(filePath);
 
       setFormData(prev => ({ ...prev, image_url: publicUrl }));
+      addToast('success', 'Imagem enviada com sucesso!');
     } catch (err: any) {
       console.error('Erro no upload:', err);
-      setError('Erro ao fazer upload da imagem. Verifique se o arquivo é válido.');
+      addToast('error', 'Erro ao fazer upload da imagem.');
     } finally {
       setUploadingImage(false);
     }
@@ -206,19 +210,18 @@ const NewsEditor = () => {
 
       if (error) throw error;
 
+      addToast('success', isEditing ? 'Notícia atualizada com sucesso!' : 'Notícia criada com sucesso!');
       navigate('/admin/content');
     } catch (err: any) {
       console.error('Erro ao salvar:', err);
       
       if (err.code === 'PGRST204') {
-        setError(
-          'Erro de Sincronização (PGRST204): O Supabase não reconhece algumas colunas. ' +
-          'Ação necessária: Vá ao Painel Supabase > Configurações > API > "Reload schema cache".'
-        );
-      } else if (err.message) {
-        setError(`Erro: ${err.message}`);
+        const msg = 'Erro de Sincronização (PGRST204): O Supabase não reconhece algumas colunas.';
+        setError(msg);
+        addToast('error', msg);
       } else {
-        setError('Erro desconhecido ao salvar publicação.');
+        setError(err.message || 'Erro ao salvar publicação.');
+        addToast('error', 'Erro ao salvar publicação.');
       }
     } finally {
       setLoading(false);

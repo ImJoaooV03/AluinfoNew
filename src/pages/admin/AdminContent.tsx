@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Search, Filter, Edit, Trash2, FilePlus, Eye, Calendar, Loader2, AlertCircle, Newspaper } from 'lucide-react';
+import { useToast } from '../../contexts/ToastContext';
 import clsx from 'clsx';
 
 interface NewsArticle {
@@ -18,6 +19,7 @@ interface NewsArticle {
 
 const AdminContent = () => {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,7 @@ const AdminContent = () => {
     } catch (err: any) {
       console.error('Erro ao buscar notícias:', err);
       setError(err.message || 'Falha ao carregar conteúdo.');
+      addToast('error', 'Erro ao carregar notícias.');
     } finally {
       setLoading(false);
     }
@@ -63,8 +66,10 @@ const AdminContent = () => {
       if (error) throw error;
 
       setArticles(articles.filter(a => a.id !== id));
+      addToast('success', 'Notícia excluída com sucesso.');
     } catch (err: any) {
-      alert('Erro ao excluir: ' + err.message);
+      console.error(err);
+      addToast('error', 'Erro ao excluir notícia: ' + err.message);
     }
   };
 

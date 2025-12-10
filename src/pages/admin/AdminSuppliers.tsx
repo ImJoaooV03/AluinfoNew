@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Search, Filter, Edit, Trash2, Plus, Loader2, AlertCircle, CheckCircle, XCircle, Star } from 'lucide-react';
+import { useToast } from '../../contexts/ToastContext';
 import clsx from 'clsx';
 
 interface Supplier {
@@ -19,6 +20,7 @@ interface Supplier {
 
 const AdminSuppliers = () => {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +49,7 @@ const AdminSuppliers = () => {
     } catch (err: any) {
       console.error('Erro ao buscar fornecedores:', err);
       setError(err.message || 'Falha ao carregar fornecedores.');
+      addToast('error', 'Erro ao carregar fornecedores.');
     } finally {
       setLoading(false);
     }
@@ -64,8 +67,10 @@ const AdminSuppliers = () => {
       if (error) throw error;
 
       setSuppliers(suppliers.filter(s => s.id !== id));
+      addToast('success', 'Fornecedor excluído com sucesso.');
     } catch (err: any) {
-      alert('Erro ao excluir: ' + err.message);
+      console.error(err);
+      addToast('error', 'Erro ao excluir: ' + err.message);
     }
   };
 
