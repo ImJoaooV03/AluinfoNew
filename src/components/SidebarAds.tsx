@@ -21,14 +21,18 @@ const SidebarAds = ({ mostReadNews }: { mostReadNews?: any[] }) => {
   useEffect(() => {
     if (!mostReadNews) {
         const fetchMostRead = async () => {
-            const { data } = await supabase
-                .from('news')
-                .select('id, title')
-                .eq('region', region) // STRICT ISOLATION
-                .eq('status', 'published')
-                .order('views', { ascending: false })
-                .limit(4);
-            if (data) setInternalMostRead(data);
+            try {
+                const { data } = await supabase
+                    .from('news')
+                    .select('id, title')
+                    .eq('region', region) // STRICT ISOLATION
+                    .eq('status', 'published')
+                    .order('views', { ascending: false })
+                    .limit(4);
+                if (data) setInternalMostRead(data);
+            } catch (error) {
+                console.error('Erro ao buscar mais lidas:', error);
+            }
         };
         fetchMostRead();
     }
@@ -38,7 +42,7 @@ const SidebarAds = ({ mostReadNews }: { mostReadNews?: any[] }) => {
 
   // Placeholder URL com texto traduzido
   const getPlaceholder = (text: string) => 
-    `https://img-wrapper.vercel.app/image?url=https://placehold.co/360x150/f3f4f6/9ca3af?text=${encodeURIComponent(text)}`;
+    `https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/360x150/f3f4f6/9ca3af?text=${encodeURIComponent(text)}`;
 
   const advertiseText = t('advertiseHere');
 

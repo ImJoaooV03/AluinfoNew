@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Search, Filter, Edit, Trash2, Plus, Loader2, AlertCircle, CheckCircle, XCircle, Star } from 'lucide-react';
+import { Search, Filter, Edit, Trash2, Plus, Loader2, AlertCircle, CheckCircle, XCircle, Star, ExternalLink } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { useRegion } from '../../contexts/RegionContext';
 import clsx from 'clsx';
@@ -229,6 +229,18 @@ const AdminSuppliers = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Preview Button */}
+                        {supplier.status === 'active' && (
+                            <a 
+                                href={`/${region}/fornecedor/${supplier.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                title="Ver no site"
+                            >
+                                <ExternalLink size={16} />
+                            </a>
+                        )}
                         <button 
                             onClick={() => navigate(`/${region}/admin/suppliers/edit/${supplier.id}`)}
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" 

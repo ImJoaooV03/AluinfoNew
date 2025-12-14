@@ -5,9 +5,11 @@ import StatCard from '../../components/admin/StatCard';
 import { Eye, Users, FileText, Factory, TrendingUp, Megaphone, FilePlus, CheckSquare, Layout, Loader2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../../lib/supabaseClient';
+import { useRegion } from '../../contexts/RegionContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { region } = useRegion();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalViews: 0,
@@ -19,7 +21,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [region]);
 
   const fetchStats = async () => {
     try {
@@ -27,30 +29,33 @@ const Dashboard = () => {
 
       // --- 1. KPIs (Cards do Topo) ---
       
-      // Contagem de Usuários
+      // Contagem de Usuários (Global)
       const { count: usersCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      // Notícias e Visualizações
+      // Notícias e Visualizações (Filtrado por Região)
       const { data: newsData } = await supabase
         .from('news')
-        .select('views');
+        .select('views')
+        .eq('region', region);
       
       const articlesCount = newsData?.length || 0;
       const viewsSum = newsData?.reduce((acc, curr) => acc + (curr.views || 0), 0) || 0;
 
-      // Fornecedores Ativos
+      // Fornecedores Ativos (Filtrado por Região)
       const { count: suppliersCount } = await supabase
         .from('suppliers')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .eq('region', region);
 
-      // Fundições Ativas
+      // Fundições Ativas (Filtrado por Região)
       const { count: foundriesCount } = await supabase
         .from('foundries')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .eq('region', region);
 
       setStats({
         totalViews: viewsSum,
@@ -70,13 +75,14 @@ const Dashboard = () => {
 
       const startDate = dates[0].toISOString(); // Data de 7 dias atrás
 
-      // Buscar Leads criados no período
+      // Buscar Leads criados no período (Filtrado por Região)
       const { data: leadsData } = await supabase
         .from('leads')
         .select('created_at')
-        .gte('created_at', startDate);
+        .gte('created_at', startDate)
+        .eq('region', region);
 
-      // Buscar Usuários criados no período
+      // Buscar Usuários criados no período (Global)
       const { data: usersData } = await supabase
         .from('profiles')
         .select('created_at')
@@ -85,7 +91,7 @@ const Dashboard = () => {
       // Agrupar dados por dia
       const realChartData = dates.map(date => {
         // Formatar data para exibição (ex: "Seg", "Ter")
-        const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+        const dayName = date.toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { weekday: 'short' }).replace('.', '');
         const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD para comparação
 
         // Contar ocorrências neste dia (usando slice para pegar YYYY-MM-DD da string ISO)
@@ -111,8 +117,8 @@ const Dashboard = () => {
   return (
     <AdminLayout>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">Visão geral do desempenho do portal.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard ({region.toUpperCase()})</h1>
+        <p className="text-gray-500">Visão geral do desempenho do portal na região.</p>
       </div>
 
       {/* KPI Cards */}
@@ -222,7 +228,7 @@ const Dashboard = () => {
           <h2 className="text-lg font-bold text-gray-800 mb-4">Ações Rápidas</h2>
           <div className="space-y-3">
             <button 
-              onClick={() => navigate('/admin/content/new')}
+              onClick={() => navigate(`/${region}/admin/content/new`)}
               className="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-left flex items-center gap-3 transition-colors group"
             >
               <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -231,7 +237,7 @@ const Dashboard = () => {
               <span className="text-sm font-medium text-gray-700">Escrever Nova Notícia</span>
             </button>
             <button 
-              onClick={() => navigate('/admin/suppliers')}
+              onClick={() => navigate(`/${region}/admin/suppliers`)}
               className="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-left flex items-center gap-3 transition-colors group"
             >
               <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center group-hover:bg-green-600 group-hover:text-white transition-colors">
@@ -240,7 +246,7 @@ const Dashboard = () => {
               <span className="text-sm font-medium text-gray-700">Gerenciar Fornecedores</span>
             </button>
             <button 
-              onClick={() => navigate('/admin/ads')}
+              onClick={() => navigate(`/${region}/admin/ads`)}
               className="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-left flex items-center gap-3 transition-colors group"
             >
               <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
@@ -249,7 +255,7 @@ const Dashboard = () => {
               <span className="text-sm font-medium text-gray-700">Gerenciar Anúncios</span>
             </button>
             <button 
-              onClick={() => navigate('/admin/hero')}
+              onClick={() => navigate(`/${region}/admin/hero`)}
               className="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-left flex items-center gap-3 transition-colors group"
             >
               <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-colors">

@@ -68,6 +68,11 @@ const AdminMediaKit = () => {
         return;
     }
 
+    if (file.size > 50 * 1024 * 1024) {
+        addToast('error', 'O arquivo excede o limite de 50MB.');
+        return;
+    }
+
     setUploading(true);
 
     try {
@@ -100,7 +105,11 @@ const AdminMediaKit = () => {
         addToast('success', 'Mídia Kit atualizado com sucesso!');
     } catch (error: any) {
         console.error(error);
-        addToast('error', 'Erro no upload: ' + error.message);
+        if (error.statusCode === '413') {
+            addToast('error', 'Erro: Arquivo maior que 50MB.');
+        } else {
+            addToast('error', 'Erro no upload: ' + error.message);
+        }
     } finally {
         setUploading(false);
     }

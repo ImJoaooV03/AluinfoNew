@@ -2,6 +2,7 @@ import React from 'react';
 import { Supplier } from '../types';
 import { Phone, Mail, MapPin, CheckCircle, ExternalLink, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useRegion } from '../contexts/RegionContext';
 
 interface SupplierCardProps {
   supplier: Supplier;
@@ -10,6 +11,8 @@ interface SupplierCardProps {
 }
 
 const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, hideLogo = false, hideContactInfo = false }) => {
+  const { region } = useRegion();
+
   return (
     <div className="bg-white rounded-sm border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full group relative overflow-hidden">
       
@@ -78,7 +81,7 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, hideLogo = false,
         )}
 
         {/* Action Button */}
-        <Link to={`/fornecedor/${supplier.id}`} className="w-full mt-auto bg-white border border-primary text-primary hover:bg-primary hover:text-white text-xs font-bold py-2 rounded-sm transition-all uppercase flex items-center justify-center gap-2 group/btn">
+        <Link to={`/${region}/fornecedor/${supplier.id}`} className="w-full mt-auto bg-white border border-primary text-primary hover:bg-primary hover:text-white text-xs font-bold py-2 rounded-sm transition-all uppercase flex items-center justify-center gap-2 group/btn">
             Ver Perfil
             <ExternalLink size={12} className="opacity-0 group-hover/btn:opacity-100 transition-opacity" />
         </Link>

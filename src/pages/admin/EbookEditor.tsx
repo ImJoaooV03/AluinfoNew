@@ -84,6 +84,12 @@ const EbookEditor = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+
+    if (file.size > 50 * 1024 * 1024) {
+        addToast('error', 'O arquivo deve ter no máximo 50MB.');
+        return;
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${region}_ebook_file_${Math.random().toString(36).substring(2)}.${fileExt}`;
     
@@ -94,9 +100,13 @@ const EbookEditor = () => {
       const { data } = supabase.storage.from('ebooks-files').getPublicUrl(fileName);
       setFormData(prev => ({ ...prev, file_url: data.publicUrl }));
       addToast('success', 'Arquivo do E-book enviado!');
-    } catch (err) { 
+    } catch (err: any) { 
         console.error(err);
-        addToast('error', 'Erro no upload do arquivo.'); 
+        if (err.statusCode === '413') {
+            addToast('error', 'Arquivo muito grande (Max 50MB).');
+        } else {
+            addToast('error', 'Erro no upload do arquivo.'); 
+        }
     } finally { 
         setUploadingFile(false); 
     }
@@ -105,6 +115,12 @@ const EbookEditor = () => {
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+
+    if (file.size > 5 * 1024 * 1024) {
+        addToast('error', 'A capa deve ter no máximo 5MB.');
+        return;
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${region}_ebook_cover_${Math.random().toString(36).substring(2)}.${fileExt}`;
     
@@ -115,9 +131,13 @@ const EbookEditor = () => {
       const { data } = supabase.storage.from('ebooks-covers').getPublicUrl(fileName);
       setFormData(prev => ({ ...prev, cover_url: data.publicUrl }));
       addToast('success', 'Capa enviada com sucesso!');
-    } catch (err) { 
+    } catch (err: any) { 
         console.error(err);
-        addToast('error', 'Erro no upload da capa.'); 
+        if (err.statusCode === '413') {
+            addToast('error', 'Imagem muito grande (Max 5MB).');
+        } else {
+            addToast('error', 'Erro no upload da capa.'); 
+        }
     } finally { 
         setUploadingCover(false); 
     }

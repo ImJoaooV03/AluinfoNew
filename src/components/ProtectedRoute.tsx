@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Loader2 } from 'lucide-react';
+import { useRegion } from '../contexts/RegionContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const { region } = useRegion();
 
   useEffect(() => {
     // Check active session
@@ -42,8 +44,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!session) {
-    // Redirect to login page, but save the current location they were trying to go to
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    // Redirect to login page with region prefix
+    return <Navigate to={`/${region}/admin/login`} state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

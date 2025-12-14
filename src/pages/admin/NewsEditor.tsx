@@ -145,6 +145,13 @@ const NewsEditor = () => {
     if (!e.target.files || e.target.files.length === 0) return;
 
     const file = e.target.files[0];
+
+    // 2MB limit for news images/avatars
+    if (file.size > 2 * 1024 * 1024) {
+        addToast('error', 'A imagem deve ter no máximo 2MB.');
+        return;
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${region}_${type}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     
@@ -152,7 +159,6 @@ const NewsEditor = () => {
     else setUploadingAvatar(true);
 
     try {
-      // Usamos 'news-images' para capa e 'avatars' para autor (ou news-images também se preferir centralizar)
       const bucket = type === 'cover' ? 'news-images' : 'avatars'; 
       
       const { error: uploadError } = await supabase.storage
@@ -173,7 +179,11 @@ const NewsEditor = () => {
       addToast('success', 'Imagem enviada com sucesso!');
     } catch (err: any) {
       console.error('Erro no upload:', err);
-      addToast('error', 'Erro ao fazer upload. Verifique se o bucket existe.');
+      if (err.statusCode === '413') {
+        addToast('error', 'Imagem muito grande. Limite de 2MB.');
+      } else {
+        addToast('error', 'Erro ao fazer upload.');
+      }
     } finally {
       if (type === 'cover') setUploadingImage(false);
       else setUploadingAvatar(false);
@@ -219,7 +229,6 @@ const NewsEditor = () => {
     setLoading(true);
 
     try {
-      // Remove campos que não existem no banco se necessário, mas aqui estamos usando NewsPayload que deve bater com o banco
       const payload = {
         title: formData.title,
         subtitle: formData.subtitle,
@@ -256,11 +265,11 @@ const NewsEditor = () => {
       navigate(`/${region}/admin/content`);
     } catch (err: any) {
       console.error('Erro ao salvar:', err);
-      // Tratamento para erro de cache de schema
-      if (err.code === 'PGRST204') {
-         addToast('error', 'Erro de esquema. Atualize o cache do Supabase (Settings > API > Reload schema cache).');
+      // Tratamento específico para erro de cache de schema (PGRST204)
+      if (err.code === 'PGRST204' || (err.message && err.message.includes('updated_at'))) {
+         addToast('error', '⚠️ Erro de Cache do Supabase: Vá em Settings > API > Reload Schema Cache no painel do Supabase.');
       } else {
-         addToast('error', 'Erro ao salvar publicação.');
+         addToast('error', 'Erro ao salvar publicação: ' + (err.message || 'Erro desconhecido'));
       }
     } finally {
       setLoading(false);

@@ -72,6 +72,9 @@ function App() {
           <Routes>
             {/* Redirect root to default region (PT) */}
             <Route path="/" element={<Navigate to="/pt" replace />} />
+            
+            {/* Redirect generic admin to PT admin */}
+            <Route path="/admin" element={<Navigate to="/pt/admin" replace />} />
 
             {/* Region Routes Wrapper */}
             <Route path="/:region" element={<LayoutWrapper />}>

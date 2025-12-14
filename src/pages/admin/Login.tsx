@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { Lock, Mail, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
+import { useRegion } from '../../contexts/RegionContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { region } = useRegion();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,8 +29,9 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Successful login
-        navigate('/admin');
+        // Redireciona para o dashboard da região atual ou padrão
+        const targetRegion = region || 'pt';
+        navigate(`/${targetRegion}/admin`);
       }
     } catch (err: any) {
       console.error('Login error:', err);
@@ -50,7 +53,7 @@ const Login = () => {
               A
             </div>
             <h2 className="text-2xl font-bold text-white tracking-tight">ALUINFO<span className="text-primary">.ADMIN</span></h2>
-            <p className="text-gray-400 text-xs mt-2 uppercase tracking-widest">Acesso Restrito</p>
+            <p className="text-gray-400 text-xs mt-2 uppercase tracking-widest">Acesso Restrito ({region.toUpperCase()})</p>
           </div>
           
           {/* Decorative circles */}

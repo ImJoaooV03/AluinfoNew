@@ -3,12 +3,14 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { NewsItem } from '../types';
 import NewsCard from './NewsCard';
 import { Link } from 'react-router-dom';
+import { useRegion } from '../contexts/RegionContext';
 
 interface RelatedNewsCarouselProps {
   items: NewsItem[];
 }
 
 const RelatedNewsCarousel: React.FC<RelatedNewsCarouselProps> = ({ items }) => {
+  const { region } = useRegion();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(2); // Default to 2
 
@@ -62,7 +64,7 @@ const RelatedNewsCarousel: React.FC<RelatedNewsCarouselProps> = ({ items }) => {
               style={{ width: `${100 / itemsPerView}%` }}
             >
               <Link 
-                to={`/noticia/${item.id}`} 
+                to={`/${region}/noticia/${item.id}`} 
                 onClick={() => window.scrollTo(0,0)} 
                 className="block h-full"
               >

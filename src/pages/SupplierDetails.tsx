@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronRight, MapPin, Phone, Mail, Globe, Star, MessageCircle, Package, ExternalLink, Loader2 } from 'lucide-react';
+import { ChevronRight, MapPin, Phone, Mail, Globe, Star, MessageCircle, Package, ExternalLink, Loader2, CheckCircle } from 'lucide-react';
 import clsx from 'clsx';
 import AdSpot from '../components/AdSpot';
 import { supabase } from '../lib/supabaseClient';
@@ -19,19 +19,33 @@ const SupplierDetails = () => {
     window.scrollTo(0, 0);
     if (id) {
         fetchSupplierData(id);
+    } else {
+        setLoading(false);
+        setError('ID do fornecedor não fornecido.');
     }
   }, [id, region]);
+
+  // Helper seguro para formatar datas
+  const safeDate = (dateString?: string) => {
+    if (!dateString) return 'Data n/a';
+    try {
+        return new Date(dateString).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', year: 'numeric' });
+    } catch (e) {
+        return 'Data inválida';
+    }
+  };
 
   const fetchSupplierData = async (supplierId: string) => {
     try {
         setLoading(true);
+        setError(null);
         
         // 1. Fetch Supplier Info (Strict Region Filter)
         const { data: supplierData, error: supplierError } = await supabase
             .from('suppliers')
             .select('*')
             .eq('id', supplierId)
-            .eq('region', region) // CORREÇÃO: Filtro Estrito por Região
+            .eq('region', region) // Filtro Estrito por Região
             .single();
 
         if (supplierError) throw supplierError;
@@ -39,19 +53,19 @@ const SupplierDetails = () => {
         if (supplierData) {
             setSupplier({
                 id: supplierData.id,
-                name: supplierData.name,
+                name: supplierData.name || 'Nome Indisponível',
                 logoUrl: supplierData.logo_url || '',
-                category: supplierData.category,
-                description: supplierData.description,
-                phone: supplierData.phone,
-                email: supplierData.email,
-                whatsapp: supplierData.whatsapp,
-                location: supplierData.location,
-                website: supplierData.website,
-                isVerified: supplierData.is_verified,
-                rating: supplierData.rating,
-                status: supplierData.status,
-                joinedDate: new Date(supplierData.created_at).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', year: 'numeric' })
+                category: supplierData.category || 'Geral',
+                description: supplierData.description || '',
+                phone: supplierData.phone || '',
+                email: supplierData.email || '',
+                whatsapp: supplierData.whatsapp || '',
+                location: supplierData.location || '',
+                website: supplierData.website || '',
+                isVerified: !!supplierData.is_verified,
+                rating: supplierData.rating || 0,
+                status: supplierData.status || 'inactive',
+                joinedDate: safeDate(supplierData.created_at)
             });
         }
 
@@ -66,17 +80,17 @@ const SupplierDetails = () => {
         if (productsData) {
             setProducts(productsData.map((p: any) => ({
                 id: p.id,
-                name: p.name,
+                name: p.name || 'Item sem nome',
                 image: p.image_url || '',
-                price: p.price,
-                category: p.category,
-                description: p.description,
-                type: p.type,
-                linkUrl: p.link_url
+                price: p.price || '',
+                category: p.category || 'Geral',
+                description: p.description || '',
+                type: p.type || 'product',
+                linkUrl: p.link_url || ''
             })));
         }
 
-    } catch (err) {
+    } catch (err: any) {
         console.error('Erro ao buscar detalhes:', err);
         setError('Fornecedor não encontrado ou indisponível nesta região.');
     } finally {
@@ -95,7 +109,7 @@ const SupplierDetails = () => {
         if (cleanNumber.length > 8) {
             return `https://wa.me/${cleanNumber}`;
         }
-        return supplier.whatsapp;
+        return supplier.whatsapp; // Fallback se não for link nem número limpo
     }
     return `mailto:${supplier.email}`;
   };
@@ -111,13 +125,14 @@ const SupplierDetails = () => {
   if (error || !supplier) {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fa] p-4 text-center">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Fornecedor não encontrado</h2>
-            <Link to={`/${region}/fornecedores`} className="text-primary hover:underline">Voltar para a lista</Link>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Ops!</h2>
+            <p className="text-gray-600 mb-4">{error || 'Fornecedor não encontrado.'}</p>
+            <Link to={`/${region}/fornecedores`} className="text-primary hover:underline font-bold">Voltar para a lista</Link>
         </div>
     );
   }
 
-  // Filter products and services
+  // Filter products and services safely
   const productList = products.filter(p => p.type === 'product');
   const serviceList = products.filter(p => p.type === 'service');
 
@@ -145,14 +160,14 @@ const SupplierDetails = () => {
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=Espa%C3%A7o+Publicit%C3%A1rio"
                 />
             </div>
             <div className="block md:hidden">
                 <AdSpot 
                     position="top_large_mobile" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=Publicidade"
                 />
             </div>
         </div>
@@ -185,7 +200,7 @@ const SupplierDetails = () => {
             <div className="lg:col-span-4 space-y-6">
                 <div className="bg-white rounded-sm border border-gray-200 shadow-sm overflow-hidden">
                     {/* Logo Header */}
-                    <div className="h-48 bg-gray-50 flex items-center justify-center border-b border-gray-100 p-8">
+                    <div className="h-48 bg-gray-50 flex items-center justify-center border-b border-gray-100 p-8 relative">
                         {supplier.logoUrl ? (
                             <img 
                                 src={supplier.logoUrl} 
@@ -193,7 +208,16 @@ const SupplierDetails = () => {
                                 className="w-full h-full object-contain"
                             />
                         ) : (
-                            <span className="text-gray-400 font-bold text-lg">Sem Logo</span>
+                            <span className="text-gray-400 font-bold text-lg flex flex-col items-center">
+                                <Package size={32} className="mb-2 opacity-50" />
+                                Sem Logo
+                            </span>
+                        )}
+                        {supplier.isVerified && (
+                            <div className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-bl-sm flex items-center gap-1 border-b border-l border-blue-100">
+                                <CheckCircle size={10} />
+                                VERIFICADO
+                            </div>
                         )}
                     </div>
                     
@@ -216,32 +240,32 @@ const SupplierDetails = () => {
                         {/* Contact Info */}
                         <div className="space-y-4">
                             <div className="flex items-start gap-3">
-                                <MapPin className="text-gray-400 mt-0.5" size={16} />
-                                <div>
+                                <MapPin className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
+                                <div className="min-w-0">
                                     <span className="block text-xs text-gray-400 font-bold uppercase">Localização</span>
-                                    <span className="text-sm text-gray-700">{supplier.location}</span>
+                                    <span className="text-sm text-gray-700 break-words">{supplier.location || '-'}</span>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
-                                <Phone className="text-gray-400 mt-0.5" size={16} />
-                                <div>
+                                <Phone className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
+                                <div className="min-w-0">
                                     <span className="block text-xs text-gray-400 font-bold uppercase">Telefone</span>
-                                    <span className="text-sm text-gray-700">{supplier.phone}</span>
+                                    <span className="text-sm text-gray-700 break-words">{supplier.phone || '-'}</span>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
-                                <Mail className="text-gray-400 mt-0.5" size={16} />
-                                <div>
+                                <Mail className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
+                                <div className="min-w-0">
                                     <span className="block text-xs text-gray-400 font-bold uppercase">E-mail</span>
-                                    <span className="text-sm text-gray-700">{supplier.email}</span>
+                                    <span className="text-sm text-gray-700 break-all">{supplier.email || '-'}</span>
                                 </div>
                             </div>
                             {supplier.website && (
                                 <div className="flex items-start gap-3">
-                                    <Globe className="text-gray-400 mt-0.5" size={16} />
-                                    <div>
+                                    <Globe className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
+                                    <div className="min-w-0">
                                         <span className="block text-xs text-gray-400 font-bold uppercase">Website</span>
-                                        <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
+                                        <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 break-all">
                                             Visitar site <ExternalLink size={10} />
                                         </a>
                                     </div>
@@ -267,7 +291,7 @@ const SupplierDetails = () => {
                 <div className="bg-white rounded-sm border border-gray-200 shadow-sm p-6">
                     <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Sobre a Empresa</h3>
                     <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
-                        {supplier.description}
+                        {supplier.description || 'Nenhuma descrição disponível.'}
                     </p>
                 </div>
             </div>

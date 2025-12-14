@@ -84,6 +84,13 @@ const TechnicalMaterialEditor = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+
+    // 50MB limit validation
+    if (file.size > 50 * 1024 * 1024) {
+        addToast('error', 'O arquivo deve ter no máximo 50MB.');
+        return;
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${region}_tech_file_${Math.random().toString(36).substring(2)}.${fileExt}`;
     
@@ -94,9 +101,13 @@ const TechnicalMaterialEditor = () => {
       const { data } = supabase.storage.from('technical-materials').getPublicUrl(fileName);
       setFormData(prev => ({ ...prev, file_url: data.publicUrl, link_url: '' })); // Limpa link externo se fizer upload
       addToast('success', 'Arquivo enviado com sucesso!');
-    } catch (err) { 
+    } catch (err: any) { 
         console.error(err);
-        addToast('error', 'Erro no upload do arquivo.'); 
+        if (err.statusCode === '413' || err.message?.includes('exceeded')) {
+            addToast('error', 'Arquivo muito grande. O limite é 50MB.');
+        } else {
+            addToast('error', 'Erro no upload do arquivo.'); 
+        }
     } finally { 
         setUploadingFile(false); 
     }
@@ -105,6 +116,13 @@ const TechnicalMaterialEditor = () => {
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+
+    // 5MB limit for images
+    if (file.size > 5 * 1024 * 1024) {
+        addToast('error', 'A imagem de capa deve ter no máximo 5MB.');
+        return;
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${region}_tech_cover_${Math.random().toString(36).substring(2)}.${fileExt}`;
     
@@ -115,9 +133,13 @@ const TechnicalMaterialEditor = () => {
       const { data } = supabase.storage.from('technical-covers').getPublicUrl(fileName);
       setFormData(prev => ({ ...prev, cover_url: data.publicUrl }));
       addToast('success', 'Capa enviada com sucesso!');
-    } catch (err) { 
+    } catch (err: any) { 
         console.error(err);
-        addToast('error', 'Erro no upload da capa.'); 
+        if (err.statusCode === '413') {
+            addToast('error', 'Imagem muito grande (Max 5MB).');
+        } else {
+            addToast('error', 'Erro no upload da capa.'); 
+        }
     } finally { 
         setUploadingCover(false); 
     }

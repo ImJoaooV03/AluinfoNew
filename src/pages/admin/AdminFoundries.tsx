@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Search, Filter, Edit, Trash2, Plus, Loader2, AlertCircle, CheckCircle, XCircle, Factory } from 'lucide-react';
+import { Search, Filter, Edit, Trash2, Plus, Loader2, AlertCircle, CheckCircle, XCircle, Factory, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
 import { useRegion } from '../../contexts/RegionContext';
 
@@ -223,6 +223,18 @@ const AdminFoundries = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Preview Button */}
+                        {foundry.status === 'active' && (
+                            <a 
+                                href={`/${region}/fundicao/${foundry.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                title="Ver no site"
+                            >
+                                <ExternalLink size={16} />
+                            </a>
+                        )}
                         <button 
                             onClick={() => navigate(`/${region}/admin/foundries/edit/${foundry.id}`)}
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" 
