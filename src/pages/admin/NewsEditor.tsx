@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Save, ArrowLeft, Image as ImageIcon, Loader2, FileText, AlignLeft, UploadCloud, Bold, Italic, Heading, List, Trash2, Plus, User, Clock, Tag, X, Star, Layout } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Loader2, FileText, AlignLeft, UploadCloud, Trash2, Plus, User, Clock, Tag, X, Star, Layout } from 'lucide-react';
 import clsx from 'clsx';
 import { useCategories } from '../../hooks/useCategories';
 import { useToast } from '../../contexts/ToastContext';
 import { useRegion } from '../../contexts/RegionContext';
+import RichTextEditor from '../../components/admin/RichTextEditor';
 
 interface NewsPayload {
   title: string;
@@ -58,8 +59,6 @@ const NewsEditor = () => {
     is_highlight: false,
     region: region
   });
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Garante a região correta ao criar novo
   useEffect(() => {
@@ -126,6 +125,11 @@ const NewsEditor = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handler específico para o Rich Text Editor
+  const handleContentChange = (html: string) => {
+    setFormData(prev => ({ ...prev, content: html }));
+  };
+
   // Tag Management
   const handleAddTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && tagInput.trim()) {
@@ -188,29 +192,6 @@ const NewsEditor = () => {
       if (type === 'cover') setUploadingImage(false);
       else setUploadingAvatar(false);
     }
-  };
-
-  const insertTag = (tag: string) => {
-    if (!textareaRef.current) return;
-    const start = textareaRef.current.selectionStart;
-    const end = textareaRef.current.selectionEnd;
-    const text = formData.content;
-    const before = text.substring(0, start);
-    const selection = text.substring(start, end);
-    const after = text.substring(end);
-    let newText = '';
-    
-    switch(tag) {
-        case 'bold': newText = `${before}<strong>${selection || 'Texto em negrito'}</strong>${after}`; break;
-        case 'italic': newText = `${before}<em>${selection || 'Texto em itálico'}</em>${after}`; break;
-        case 'h3': newText = `${before}<h3>${selection || 'Subtítulo'}</h3>${after}`; break;
-        case 'p': newText = `${before}<p>${selection || 'Parágrafo'}</p>${after}`; break;
-        case 'ul': newText = `${before}<ul>\n  <li>${selection || 'Item da lista'}</li>\n</ul>${after}`; break;
-        case 'blockquote': newText = `${before}<blockquote>${selection || 'Citação'}</blockquote>${after}`; break;
-        default: newText = text;
-    }
-    
-    setFormData(prev => ({ ...prev, content: newText }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -331,28 +312,10 @@ const NewsEditor = () => {
                 <AlignLeft size={16} /> Corpo da Notícia
               </h3>
               
-              <div className="border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-                <div className="flex items-center gap-1 bg-gray-50 border-b border-gray-300 p-2 flex-wrap">
-                    <button type="button" onClick={() => insertTag('bold')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Negrito"><Bold size={16} /></button>
-                    <button type="button" onClick={() => insertTag('italic')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Itálico"><Italic size={16} /></button>
-                    <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                    <button type="button" onClick={() => insertTag('h3')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Subtítulo"><Heading size={16} /></button>
-                    <button type="button" onClick={() => insertTag('p')} className="p-1.5 hover:bg-gray-200 rounded font-serif font-bold text-sm px-2 text-gray-700" title="Parágrafo">P</button>
-                    <button type="button" onClick={() => insertTag('blockquote')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Citação">""</button>
-                    <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                    <button type="button" onClick={() => insertTag('ul')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Lista"><List size={16} /></button>
-                </div>
-                <textarea 
-                    ref={textareaRef} 
-                    name="content" 
-                    value={formData.content} 
-                    onChange={handleChange} 
-                    rows={20} 
-                    className="w-full px-4 py-3 border-none focus:ring-0 font-mono text-sm leading-relaxed" 
-                    required 
-                    placeholder="Escreva o conteúdo aqui. Use a barra acima para formatar."
-                />
-              </div>
+              <RichTextEditor 
+                content={formData.content} 
+                onChange={handleContentChange} 
+              />
             </div>
           </div>
 
