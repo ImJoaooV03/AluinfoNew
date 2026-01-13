@@ -16,6 +16,7 @@ const Advertise = () => {
 
   const fetchMediaKitUrl = async () => {
     try {
+      // Busca na tabela correta 'media_kit_settings'
       const { data } = await supabase
         .from('media_kit_settings')
         .select('file_url')
@@ -34,7 +35,9 @@ const Advertise = () => {
 
   const handleDownloadClick = () => {
     if (!mediaKitUrl) {
-      alert(region === 'pt' ? 'O Mídia Kit está sendo atualizado.' : region === 'mx' ? 'El Media Kit se está actualizando.' : 'Media Kit is being updated.');
+      alert(region === 'pt' ? 'O Mídia Kit está sendo atualizado. Tente novamente mais tarde.' : region === 'mx' ? 'El Media Kit se está actualizando.' : 'Media Kit is being updated.');
+      // Tenta buscar novamente caso tenha acabado de ser enviado
+      fetchMediaKitUrl();
       return;
     }
     setIsModalOpen(true);

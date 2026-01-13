@@ -59,16 +59,32 @@ const AdminIndicators = () => {
     setSaving(true);
 
     try {
-      const { error } = await supabase
-        .from('market_indicators')
-        .upsert({
-          region: region,
-          aluminum_price: data.aluminum_price,
-          aluminum_change: data.aluminum_change,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'region' });
+      const payload = {
+        region: region,
+        aluminum_price: data.aluminum_price,
+        aluminum_change: data.aluminum_change,
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
+      // Estratégia Robusta: Tentar INSERT. Se falhar com duplicidade (23505), fazer UPDATE.
+      // Isso contorna limitações de visibilidade do RLS onde o SELECT retorna null mas o registro existe.
+      const { error: insertError } = await supabase
+        .from('market_indicators')
+        .insert([payload]);
+
+      if (insertError) {
+        // Código 23505: unique_violation (chave duplicada)
+        if (insertError.code === '23505') {
+            const { error: updateError } = await supabase
+                .from('market_indicators')
+                .update(payload)
+                .eq('region', region);
+            
+            if (updateError) throw updateError;
+        } else {
+            throw insertError;
+        }
+      }
 
       addToast('success', 'Indicadores atualizados com sucesso!');
       fetchIndicators(); // Refresh timestamp
