@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import StatCard from '../../components/admin/StatCard';
-import { Eye, Users, FileText, Factory, TrendingUp, Megaphone, FilePlus, CheckSquare, Layout, Loader2 } from 'lucide-react';
+import { Eye, Users, FileText, Factory, TrendingUp, Megaphone, FilePlus, CheckSquare, Layout, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../../lib/supabaseClient';
 import { useRegion } from '../../contexts/RegionContext';
@@ -16,6 +16,11 @@ const Dashboard = () => {
     totalUsers: 0,
     totalArticles: 0,
     activeCompanies: 0
+  });
+  const [systemStatus, setSystemStatus] = useState({
+    database: true,
+    storage: true,
+    mediaKit: false
   });
   const [chartData, setChartData] = useState<any[]>([]);
 
@@ -64,7 +69,22 @@ const Dashboard = () => {
         activeCompanies: (suppliersCount || 0) + (foundriesCount || 0)
       });
 
-      // --- 2. Dados do Gráfico (Últimos 7 Dias) ---
+      // --- 2. System Status Checks ---
+      
+      // Check Media Kit
+      const { data: mediaKit } = await supabase
+        .from('media_kit_settings')
+        .select('id')
+        .eq('region', region)
+        .maybeSingle();
+
+      setSystemStatus({
+        database: true, // Assumed true if we got this far
+        storage: true,
+        mediaKit: !!mediaKit
+      });
+
+      // --- 3. Dados do Gráfico (Últimos 7 Dias) ---
       
       // Gerar array com os últimos 7 dias
       const dates = Array.from({ length: 7 }, (_, i) => {
@@ -265,24 +285,39 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <h2 className="text-lg font-bold text-gray-800 mt-8 mb-4">Status do Sistema</h2>
+          <h2 className="text-lg font-bold text-gray-800 mt-8 mb-4">Status do Sistema ({region.toUpperCase()})</h2>
           <div className="space-y-4">
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-gray-500">Banco de Dados</span>
-                <span className="font-bold text-green-600">Online</span>
+                <span className="font-bold text-green-600 flex items-center gap-1"><CheckCircle size={12} /> Online</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '100%' }}></div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '100%' }}></div>
               </div>
             </div>
+            
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-500">Mídia Kit</span>
+                {systemStatus.mediaKit ? (
+                    <span className="font-bold text-green-600 flex items-center gap-1"><CheckCircle size={12} /> Configurado</span>
+                ) : (
+                    <span className="font-bold text-yellow-600 flex items-center gap-1"><AlertTriangle size={12} /> Pendente</span>
+                )}
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div className={`h-1.5 rounded-full ${systemStatus.mediaKit ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: '100%' }}></div>
+              </div>
+            </div>
+
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-gray-500">Armazenamento</span>
-                <span className="font-bold text-gray-700">Disponível</span>
+                <span className="font-bold text-blue-600">Disponível</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full" style={{ width: '25%' }}></div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '25%' }}></div>
               </div>
             </div>
           </div>

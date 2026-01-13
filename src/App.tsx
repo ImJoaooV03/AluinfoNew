@@ -39,6 +39,7 @@ import AdminMediaKit from './pages/admin/AdminMediaKit';
 import AdminHeroCarousel from './pages/admin/AdminHeroCarousel';
 import HeroSlideEditor from './pages/admin/HeroSlideEditor';
 import AdminCategories from './pages/admin/AdminCategories';
+import AdminIndicators from './pages/admin/AdminIndicators';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Contexts
@@ -268,6 +269,12 @@ function App() {
                 <Route path="categories" element={
                   <ProtectedRoute>
                     <AdminCategories />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="indicators" element={
+                  <ProtectedRoute>
+                    <AdminIndicators />
                   </ProtectedRoute>
                 } />
 

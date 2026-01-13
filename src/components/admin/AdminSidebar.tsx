@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory, BookOpen, Mail, Book, Calendar, FileText, MonitorPlay, Tag, Globe } from 'lucide-react';
+import { LayoutDashboard, Users, Newspaper, Settings, LogOut, Package, Megaphone, Factory, BookOpen, Mail, Book, Calendar, FileText, MonitorPlay, Tag, Globe, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useRegion } from '../../contexts/RegionContext';
 import clsx from 'clsx';
@@ -34,6 +34,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
     { icon: <Package size={20} />, label: 'Fornecedores', path: `/${region}/admin/suppliers` },
     { icon: <Factory size={20} />, label: 'Fundições', path: `/${region}/admin/foundries` },
     { icon: <Megaphone size={20} />, label: 'Publicidade', path: `/${region}/admin/ads` },
+    { icon: <TrendingUp size={20} />, label: 'Indicadores LME', path: `/${region}/admin/indicators` },
     { icon: <FileText size={20} />, label: 'Mídia Kit', path: `/${region}/admin/media-kit` },
     { icon: <Mail size={20} />, label: 'Leads', path: `/${region}/admin/leads` },
     { icon: <MonitorPlay size={20} />, label: 'Carrossel Home', path: `/${region}/admin/hero` },

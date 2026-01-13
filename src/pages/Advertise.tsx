@@ -57,11 +57,6 @@ const Advertise = () => {
     pt: {
       statsTitle: "Por que anunciar no AluInfo?",
       statsDesc: "Somos o maior portal dedicado exclusivamente ao mercado de alumínio na região. Conectamos sua marca aos principais decisores, engenheiros e compradores do setor.",
-      stats: [
-        { label: "Profissionais do Setor", value: "+15k", icon: Users },
-        { label: "Visualizações Mensais", value: "+50k", icon: Globe },
-        { label: "Taxa de Engajamento", value: "Alto", icon: MousePointer }
-      ],
       formatsTitle: "Formatos de Publicidade",
       formatsDesc: "Oferecemos diversas opções para destacar sua marca e atingir seus objetivos de marketing.",
       formats: [
@@ -77,11 +72,6 @@ const Advertise = () => {
     mx: {
       statsTitle: "¿Por qué anunciarse en AluInfo?",
       statsDesc: "Somos el mayor portal dedicado exclusivamente al mercado del aluminio en la región. Conectamos su marca con los principales tomadores de decisiones, ingenieros y compradores del sector.",
-      stats: [
-        { label: "Profesionales del Sector", value: "+15k", icon: Users },
-        { label: "Vistas Mensuales", value: "+50k", icon: Globe },
-        { label: "Tasa de Interacción", value: "Alta", icon: MousePointer }
-      ],
       formatsTitle: "Formatos de Publicidad",
       formatsDesc: "Ofrecemos diversas opciones para destacar su marca y alcanzar sus objetivos de marketing.",
       formats: [
@@ -97,11 +87,6 @@ const Advertise = () => {
     en: {
       statsTitle: "Why advertise on AluInfo?",
       statsDesc: "We are the largest portal dedicated exclusively to the aluminum market in the region. We connect your brand to key decision-makers, engineers, and buyers in the sector.",
-      stats: [
-        { label: "Industry Professionals", value: "+15k", icon: Users },
-        { label: "Monthly Views", value: "+50k", icon: Globe },
-        { label: "Engagement Rate", value: "High", icon: MousePointer }
-      ],
       formatsTitle: "Advertising Formats",
       formatsDesc: "We offer various options to highlight your brand and achieve your marketing goals.",
       formats: [
@@ -152,46 +137,29 @@ const Advertise = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Section (Modified: Cards removed, text centered) */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div className="space-y-6">
-                    <h2 className="text-3xl font-bold text-gray-900 leading-tight">
-                        {currentContent.statsTitle}
-                    </h2>
-                    <p className="text-gray-600 text-lg leading-relaxed">
-                        {currentContent.statsDesc}
-                    </p>
-                    <ul className="space-y-3 mt-4">
-                        <li className="flex items-center gap-3 text-gray-700">
-                            <CheckCircle className="text-primary" size={20} />
-                            <span>Networking qualificado</span>
-                        </li>
-                        <li className="flex items-center gap-3 text-gray-700">
-                            <CheckCircle className="text-primary" size={20} />
-                            <span>Autoridade no mercado</span>
-                        </li>
-                        <li className="flex items-center gap-3 text-gray-700">
-                            <CheckCircle className="text-primary" size={20} />
-                            <span>Alcance global</span>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {currentContent.stats.map((stat, idx) => {
-                        const Icon = stat.icon;
-                        return (
-                            <div key={idx} className={`bg-gray-50 p-6 rounded-xl border border-gray-100 text-center hover:shadow-md transition-shadow ${idx === 2 ? 'sm:col-span-2' : ''}`}>
-                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary mx-auto mb-4 shadow-sm">
-                                    <Icon size={24} />
-                                </div>
-                                <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                                <div className="text-sm text-gray-500 font-medium uppercase tracking-wide">{stat.label}</div>
-                            </div>
-                        );
-                    })}
+            <div className="max-w-3xl mx-auto text-center space-y-8">
+                <h2 className="text-3xl font-bold text-gray-900 leading-tight">
+                    {currentContent.statsTitle}
+                </h2>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                    {currentContent.statsDesc}
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 md:gap-8 pt-4">
+                    <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-5 py-2.5 rounded-full border border-gray-100">
+                        <CheckCircle className="text-primary" size={20} />
+                        <span className="font-medium">Networking qualificado</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-5 py-2.5 rounded-full border border-gray-100">
+                        <CheckCircle className="text-primary" size={20} />
+                        <span className="font-medium">Autoridade no mercado</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 bg-gray-50 px-5 py-2.5 rounded-full border border-gray-100">
+                        <CheckCircle className="text-primary" size={20} />
+                        <span className="font-medium">Alcance global</span>
+                    </div>
                 </div>
             </div>
         </div>

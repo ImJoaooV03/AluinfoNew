@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { UploadCloud, FileText, Download, Loader2, Trash2, Search, Calendar, Mail, Eye } from 'lucide-react';
@@ -14,6 +14,7 @@ const AdminMediaKit = () => {
   const [currentFile, setCurrentFile] = useState<{ url: string; name: string; updated_at: string } | null>(null);
   const [leads, setLeads] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchData();
@@ -103,12 +104,18 @@ const AdminMediaKit = () => {
             updated_at: new Date().toISOString()
         });
         addToast('success', 'Mídia Kit atualizado com sucesso!');
+        
+        // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
     } catch (error: any) {
         console.error(error);
         if (error.statusCode === '413') {
             addToast('error', 'Erro: Arquivo maior que 50MB.');
+        } else if (error.code === '42501') {
+            addToast('error', 'Permissão negada: Verifique se você é um administrador.');
         } else {
-            addToast('error', 'Erro no upload: ' + error.message);
+            addToast('error', 'Erro no upload: ' + (error.message || 'Erro desconhecido'));
         }
     } finally {
         setUploading(false);
@@ -208,7 +215,15 @@ const AdminMediaKit = () => {
                 )}
 
                 <div className="relative">
-                    <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" id="mk-upload" disabled={uploading} />
+                    <input 
+                        type="file" 
+                        accept=".pdf" 
+                        onChange={handleFileUpload} 
+                        className="hidden" 
+                        id="mk-upload" 
+                        disabled={uploading} 
+                        ref={fileInputRef}
+                    />
                     <label 
                         htmlFor="mk-upload" 
                         className={clsx(
