@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { User, Bell, Loader2, Shield, Mail } from 'lucide-react';
+import { User, Bell, Loader2, Shield, Globe } from 'lucide-react';
 import clsx from 'clsx';
 import { UserProfile } from '../../types/settings';
 import { useToast } from '../../contexts/ToastContext';
@@ -10,10 +10,11 @@ import { useToast } from '../../contexts/ToastContext';
 import ProfileSettings from '../../components/admin/settings/ProfileSettings';
 import SecuritySettings from '../../components/admin/settings/SecuritySettings';
 import NotificationSettings from '../../components/admin/settings/NotificationSettings';
+import SiteIdentitySettings from '../../components/admin/settings/SiteIdentitySettings'; // Novo componente
 
 const AdminSettings = () => {
   const { addToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'identity'>('profile');
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile>({
     id: '',
@@ -63,6 +64,7 @@ const AdminSettings = () => {
     { id: 'profile', label: 'Meu Perfil', icon: User },
     { id: 'security', label: 'Segurança', icon: Shield },
     { id: 'notifications', label: 'Notificações', icon: Bell },
+    { id: 'identity', label: 'Identidade Visual', icon: Globe }, // Nova aba
   ];
 
   if (loading) {
@@ -82,12 +84,12 @@ const AdminSettings = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Configurações</h1>
-          <p className="text-gray-500">Gerencie suas preferências e dados da conta.</p>
+          <p className="text-gray-500">Gerencie suas preferências e a identidade do site.</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           
-          {/* Sidebar Navigation - Agora estático (sem sticky) */}
+          {/* Sidebar Navigation */}
           <div className="lg:w-64 flex-shrink-0 w-full">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <nav className="flex flex-col p-2">
@@ -124,6 +126,9 @@ const AdminSettings = () => {
             )}
             {activeTab === 'notifications' && (
               <NotificationSettings />
+            )}
+            {activeTab === 'identity' && (
+              <SiteIdentitySettings />
             )}
           </div>
         </div>

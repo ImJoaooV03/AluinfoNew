@@ -11,7 +11,7 @@ interface SupplierCardProps {
 }
 
 const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, hideLogo = false, hideContactInfo = false }) => {
-  const { region } = useRegion();
+  const { region, t } = useRegion();
 
   return (
     <div className="bg-white rounded-sm border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full group relative overflow-hidden">
@@ -20,7 +20,7 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, hideLogo = false,
       {supplier.isVerified && (
         <div className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-bl-sm flex items-center gap-1 border-b border-l border-blue-100 z-10">
             <CheckCircle size={10} />
-            VERIFICADO
+            {t('verified')}
         </div>
       )}
 
@@ -36,7 +36,7 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, hideLogo = false,
             ) : (
                 <div className="flex flex-col items-center justify-center text-gray-300">
                     <Package size={32} strokeWidth={1.5} />
-                    <span className="text-[10px] font-medium mt-1 uppercase tracking-wide">Sem Logo</span>
+                    <span className="text-[10px] font-medium mt-1 uppercase tracking-wide">{t('noLogo')}</span>
                 </div>
             )}
         </div>
@@ -82,7 +82,7 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, hideLogo = false,
 
         {/* Action Button */}
         <Link to={`/${region}/fornecedor/${supplier.id}`} className="w-full mt-auto bg-white border border-primary text-primary hover:bg-primary hover:text-white text-xs font-bold py-2 rounded-sm transition-all uppercase flex items-center justify-center gap-2 group/btn">
-            Ver Perfil
+            {t('viewProfile')}
             <ExternalLink size={12} className="opacity-0 group-hover/btn:opacity-100 transition-opacity" />
         </Link>
       </div>

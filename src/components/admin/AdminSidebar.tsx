@@ -13,7 +13,7 @@ interface AdminSidebarProps {
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { region } = useRegion();
+  const { region, logoUrl } = useRegion();
 
   const handleLogout = async () => {
     try {
@@ -57,13 +57,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
         "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col h-full",
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        {/* Logo Area */}
-        <div className="h-16 flex items-center px-6 border-b border-gray-100 flex-shrink-0 justify-between">
+        {/* Logo Area - Dark Background to match public site header */}
+        <div className="h-16 flex items-center px-6 bg-[#1a1a1a] border-b border-gray-800 flex-shrink-0 justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
-                A
-            </div>
-            <span className="text-xl font-bold text-gray-800 tracking-tight">ALUINFO<span className="text-primary">.ADMIN</span></span>
+            <img 
+                src={logoUrl || "/logo.png"} 
+                alt="AluInfo" 
+                className="h-8 w-auto object-contain"
+                onError={(e) => {
+                    if (e.currentTarget.src !== window.location.origin + '/logo.png') {
+                        e.currentTarget.src = '/logo.png';
+                    }
+                }}
+            />
+            <span className="text-[10px] font-bold text-white/80 bg-white/10 px-1.5 py-0.5 rounded border border-white/10">ADMIN</span>
           </div>
         </div>
 

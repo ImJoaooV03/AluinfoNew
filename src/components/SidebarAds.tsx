@@ -24,10 +24,15 @@ const SidebarAds = ({ mostReadNews }: { mostReadNews?: any[] }) => {
   );
 
   useEffect(() => {
+    let isMounted = true;
+
     // 1. Fetch Most Read News (if not provided)
     if (!mostReadNews) {
         const fetchMostRead = async () => {
             try {
+                // Clear previous state
+                setInternalMostRead([]);
+                
                 const { data } = await supabase
                     .from('news')
                     .select('id, title')
@@ -35,7 +40,8 @@ const SidebarAds = ({ mostReadNews }: { mostReadNews?: any[] }) => {
                     .eq('status', 'published')
                     .order('views', { ascending: false })
                     .limit(4);
-                if (data) setInternalMostRead(data);
+                
+                if (isMounted && data) setInternalMostRead(data);
             } catch (error) {
                 console.error('Erro ao buscar mais lidas:', error);
             }
@@ -53,19 +59,26 @@ const SidebarAds = ({ mostReadNews }: { mostReadNews?: any[] }) => {
                 .eq('region', region)
                 .maybeSingle();
             
-            if (data) {
+            if (isMounted && data) {
                 setIndicators({
                     price: data.aluminum_price || '$0.00',
                     change: data.aluminum_change || '0.00%'
                 });
+            } else if (isMounted) {
+                // Reset to default if no data found for region
+                setIndicators({ price: '$0.00', change: '0.00%' });
             }
         } catch (error) {
             console.error('Erro ao buscar indicadores:', error);
         } finally {
-            setLoadingIndicators(false);
+            if (isMounted) setLoadingIndicators(false);
         }
     };
     fetchIndicators();
+
+    return () => {
+        isMounted = false;
+    };
 
   }, [region, mostReadNews]);
 
@@ -73,7 +86,7 @@ const SidebarAds = ({ mostReadNews }: { mostReadNews?: any[] }) => {
 
   // Placeholder URL com texto traduzido
   const getPlaceholder = (text: string) => 
-    `https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/360x150/f3f4f6/9ca3af?text=${encodeURIComponent(text)}`;
+    `https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/360x150/f3f4f6/9ca3af?text=${encodeURIComponent(text)}`;
 
   const advertiseText = t('advertiseHere');
 

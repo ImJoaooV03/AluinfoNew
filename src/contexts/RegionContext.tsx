@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Region } from '../types';
+import { supabase } from '../lib/supabaseClient';
 
 // Dicionário de Traduções Completo
 const translations = {
@@ -30,6 +31,32 @@ const translations = {
     send: 'Enviar',
     cancel: 'Cancelar',
     save: 'Salvar',
+    unavailable: 'Indisponível',
+    free: 'Grátis',
+    learnMore: 'Saiba mais',
+    comingSoon: 'Em breve',
+    viewProfile: 'Ver Perfil',
+    viewDetails: 'Ver Detalhes',
+    sendMessage: 'Enviar Mensagem',
+    sendWhatsapp: 'Enviar WhatsApp',
+    requestQuote: 'Solicitar Cotação',
+    visitSite: 'Visitar site',
+    
+    // Labels
+    verified: 'VERIFICADO',
+    noLogo: 'Sem Logo',
+    event: 'Evento',
+    about: 'Sobre',
+    products: 'Produtos',
+    services: 'Serviços',
+    location: 'Localização',
+    phone: 'Telefone',
+    email: 'E-mail',
+    website: 'Website',
+    memberSince: 'Membro desde',
+    category: 'Categoria',
+    active: 'Ativo',
+    inactive: 'Inativo',
     
     // Sections
     latestNews: 'Últimas Notícias',
@@ -51,7 +78,6 @@ const translations = {
     
     // Footer
     quickLinks: 'Links Rápidos',
-    services: 'Serviços',
     education: 'Educação',
     contact: 'Contato',
     termsOfUse: 'Termos de Uso',
@@ -74,8 +100,6 @@ const translations = {
     new: 'Novo',
     edit: 'Editar',
     delete: 'Excluir',
-    active: 'Ativo',
-    inactive: 'Inativo',
     draft: 'Rascunho',
     published: 'Publicado'
   },
@@ -105,6 +129,32 @@ const translations = {
     send: 'Enviar',
     cancel: 'Cancelar',
     save: 'Guardar',
+    unavailable: 'No disponible',
+    free: 'Gratis',
+    learnMore: 'Más información',
+    comingSoon: 'Próximamente',
+    viewProfile: 'Ver Perfil',
+    viewDetails: 'Ver Detalles',
+    sendMessage: 'Enviar Mensaje',
+    sendWhatsapp: 'Enviar WhatsApp',
+    requestQuote: 'Solicitar Cotización',
+    visitSite: 'Visitar sitio',
+    
+    // Labels
+    verified: 'VERIFICADO',
+    noLogo: 'Sin Logo',
+    event: 'Evento',
+    about: 'Sobre',
+    products: 'Productos',
+    services: 'Servicios',
+    location: 'Ubicación',
+    phone: 'Teléfono',
+    email: 'Correo',
+    website: 'Sitio Web',
+    memberSince: 'Miembro desde',
+    category: 'Categoría',
+    active: 'Activo',
+    inactive: 'Inactivo',
     
     // Sections
     latestNews: 'Últimas Noticias',
@@ -126,7 +176,6 @@ const translations = {
     
     // Footer
     quickLinks: 'Enlaces Rápidos',
-    services: 'Servicios',
     education: 'Educación',
     contact: 'Contacto',
     termsOfUse: 'Términos de Uso',
@@ -149,8 +198,6 @@ const translations = {
     new: 'Nuevo',
     edit: 'Editar',
     delete: 'Eliminar',
-    active: 'Activo',
-    inactive: 'Inactivo',
     draft: 'Borrador',
     published: 'Publicado'
   },
@@ -180,6 +227,32 @@ const translations = {
     send: 'Send',
     cancel: 'Cancel',
     save: 'Save',
+    unavailable: 'Unavailable',
+    free: 'Free',
+    learnMore: 'Learn more',
+    comingSoon: 'Coming soon',
+    viewProfile: 'View Profile',
+    viewDetails: 'View Details',
+    sendMessage: 'Send Message',
+    sendWhatsapp: 'Send WhatsApp',
+    requestQuote: 'Request Quote',
+    visitSite: 'Visit website',
+    
+    // Labels
+    verified: 'VERIFIED',
+    noLogo: 'No Logo',
+    event: 'Event',
+    about: 'About',
+    products: 'Products',
+    services: 'Services',
+    location: 'Location',
+    phone: 'Phone',
+    email: 'Email',
+    website: 'Website',
+    memberSince: 'Member since',
+    category: 'Category',
+    active: 'Active',
+    inactive: 'Inactive',
     
     // Sections
     latestNews: 'Latest News',
@@ -201,7 +274,6 @@ const translations = {
     
     // Footer
     quickLinks: 'Quick Links',
-    services: 'Services',
     education: 'Education',
     contact: 'Contact',
     termsOfUse: 'Terms of Use',
@@ -224,8 +296,6 @@ const translations = {
     new: 'New',
     edit: 'Edit',
     delete: 'Delete',
-    active: 'Active',
-    inactive: 'Inactive',
     draft: 'Draft',
     published: 'Published'
   }
@@ -235,6 +305,8 @@ interface RegionContextType {
   region: Region;
   t: (key: keyof typeof translations['pt']) => string;
   changeRegion: (newRegion: Region) => void;
+  logoUrl: string | null;
+  refreshLogo: () => void;
 }
 
 const RegionContext = createContext<RegionContextType | undefined>(undefined);
@@ -242,6 +314,7 @@ const RegionContext = createContext<RegionContextType | undefined>(undefined);
 export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   
   // Inicialização Lazy
   const [region, setRegion] = useState<Region>(() => {
@@ -263,20 +336,31 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [location.pathname]);
 
-  const changeRegion = (newRegion: Region) => {
-    const currentPath = location.pathname;
-    const pathSegments = currentPath.split('/');
-    
-    // Substitui ou insere a região na URL
-    if (['pt', 'mx', 'en'].includes(pathSegments[1])) {
-      pathSegments[1] = newRegion;
-    } else {
-      pathSegments.splice(1, 0, newRegion);
+  // Buscar Logo da Região
+  const fetchLogo = async () => {
+    try {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('logo_url')
+        .eq('region', region)
+        .maybeSingle();
+      
+      if (data && data.logo_url) {
+        setLogoUrl(data.logo_url);
+      } else {
+        setLogoUrl(null); // Fallback to default
+      }
+    } catch (error) {
+      console.error('Erro ao buscar logo:', error);
     }
-    
-    const newPath = pathSegments.join('/');
-    setRegion(newRegion); // Atualiza estado imediatamente
-    navigate(newPath);
+  };
+
+  useEffect(() => {
+    fetchLogo();
+  }, [region]);
+
+  const changeRegion = (newRegion: Region) => {
+    navigate(`/${newRegion}`);
   };
 
   const t = (key: keyof typeof translations['pt']) => {
@@ -284,7 +368,7 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <RegionContext.Provider value={{ region, t, changeRegion }}>
+    <RegionContext.Provider value={{ region, t, changeRegion, logoUrl, refreshLogo: fetchLogo }}>
       {children}
     </RegionContext.Provider>
   );

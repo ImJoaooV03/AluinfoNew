@@ -9,10 +9,10 @@ const Header = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
-  const { region, changeRegion, t } = useRegion();
+  const { region, changeRegion, t, logoUrl } = useRegion(); // Added logoUrl
 
   const navItems = [
-    { label: t('home'), icon: <Home size={16} />, path: '' }, // Path relativo
+    { label: t('home'), icon: <Home size={16} />, path: '' },
     { label: t('news'), icon: <Newspaper size={16} />, path: 'noticias' },
     { label: t('technical'), icon: <BookOpen size={16} />, path: 'artigos-tecnicos' },
     { label: t('ebooks'), icon: <BookOpen size={16} />, path: 'ebooks' },
@@ -85,16 +85,18 @@ const Header = () => {
           <div className="bg-[#222222] py-4 md:py-5">
             <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
               {/* Logo */}
-              <Link to={`/${region}`} className="flex items-center gap-3 flex-shrink-0 group">
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-105 transition-transform">
-                      A
-                  </div>
-                  <div className="flex flex-col">
-                      <span className="text-2xl font-bold text-white tracking-tight leading-none group-hover:text-gray-200 transition-colors">ALUINFO</span>
-                      <span className="text-[10px] text-gray-400 tracking-widest uppercase font-medium">
-                        {region === 'pt' ? 'PORTAL DE NOTÍCIAS' : region === 'mx' ? 'PORTAL DE NOTICIAS' : 'NEWS PORTAL'}
-                      </span>
-                  </div>
+              <Link to={`/${region}`} className="flex items-center gap-4 flex-shrink-0 group">
+                  <img 
+                    src={logoUrl || "/logo.png"} 
+                    alt="AluInfo" 
+                    className="h-10 w-auto object-contain" 
+                    onError={(e) => {
+                        // Fallback se a imagem dinâmica falhar
+                        if (e.currentTarget.src !== window.location.origin + '/logo.png') {
+                            e.currentTarget.src = '/logo.png';
+                        }
+                    }}
+                  />
               </Link>
 
               {/* Search Bar */}

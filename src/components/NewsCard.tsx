@@ -1,6 +1,7 @@
 import React from 'react';
 import { NewsItem } from '../types';
 import { Calendar, User, MapPin, FileText, Download, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { useRegion } from '../contexts/RegionContext';
 
 interface NewsCardProps {
   item: NewsItem;
@@ -9,6 +10,7 @@ interface NewsCardProps {
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDownloadRequest }) => {
+  const { t } = useRegion();
   
   // Helper to handle download click
   const handleDownloadClick = (e: React.MouseEvent) => {
@@ -17,8 +19,6 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
         onDownloadRequest(item);
     }
   };
-
-  const fallbackImage = 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem';
 
   if (variant === 'technical') {
     return (
@@ -48,11 +48,11 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
                 rel="noopener noreferrer"
                 className="w-full bg-[#F37021] hover:bg-[#d65a12] text-white text-xs font-bold py-2.5 rounded-sm transition-colors uppercase tracking-wide mt-auto shadow-sm flex items-center justify-center gap-2 cursor-pointer"
             >
-                <Download size={14} /> Baixar
+                <Download size={14} /> {t('download')}
             </a>
         ) : (
             <button disabled className="w-full bg-gray-200 text-gray-400 text-xs font-bold py-2.5 rounded-sm uppercase tracking-wide mt-auto cursor-not-allowed">
-                Indisponível
+                {t('unavailable')}
             </button>
         )}
       </div>
@@ -65,7 +65,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
         <div className="flex gap-4 mb-4">
             <div className="w-1/3 flex-shrink-0">
                 <img 
-                    src={item.imageUrl || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa'} 
+                    src={item.imageUrl || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa'} 
                     alt={item.title} 
                     className="w-full h-auto shadow-sm object-cover aspect-[3/4] rounded-sm" 
                 />
@@ -73,7 +73,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
             <div className="w-2/3">
                  <div className="flex justify-between items-center mb-2">
                     <span className="bg-gray-200 text-gray-700 text-[10px] font-bold px-2 py-0.5 rounded">E-book</span>
-                    <span className="text-[10px] text-primary font-bold">Grátis</span>
+                    <span className="text-[10px] text-primary font-bold">{t('free')}</span>
                 </div>
                 <h3 className="font-bold text-sm text-gray-800 mb-1 leading-tight line-clamp-3">{item.title}</h3>
                 {item.author && <p className="text-[10px] text-gray-500 mb-2">{item.author}</p>}
@@ -93,11 +93,11 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
                 rel="noopener noreferrer"
                 className="w-full bg-primary hover:bg-primary-hover text-white text-xs font-bold py-2 rounded transition-colors uppercase flex items-center justify-center gap-2 cursor-pointer"
             >
-                <Download size={14} /> Baixar
+                <Download size={14} /> {t('download')}
             </a>
         ) : (
             <button disabled className="w-full bg-gray-200 text-gray-400 text-xs font-bold py-2 rounded uppercase cursor-not-allowed">
-                Indisponível
+                {t('unavailable')}
             </button>
         )}
       </div>
@@ -124,7 +124,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
                  {/* Badge */}
                  <div className="absolute top-3 left-3">
                     <span className="bg-gray-200/90 backdrop-blur-sm text-gray-700 text-[10px] font-bold px-2 py-1 rounded uppercase shadow-sm">
-                        Evento
+                        {t('event')}
                     </span>
                  </div>
             </div>
@@ -157,11 +157,11 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, variant = 'highlight', onDown
                             rel="noopener noreferrer"
                             className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors flex items-center gap-1.5 shadow-sm"
                         >
-                            Saiba mais <ExternalLink size={12} />
+                            {t('learnMore')} <ExternalLink size={12} />
                         </a>
                      ) : (
                         <button disabled className="bg-gray-100 text-gray-400 text-xs font-bold px-4 py-2 rounded-sm cursor-default">
-                            Em breve
+                            {t('comingSoon')}
                         </button>
                      )}
                 </div>

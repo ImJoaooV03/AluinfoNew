@@ -28,52 +28,62 @@ const News = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetchNews();
-  }, [region]);
+    let isMounted = true;
 
-  const fetchNews = async () => {
-    try {
-      setIsLoading(true);
-      // Busca todas as notícias publicadas
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .eq('status', 'published')
-        .eq('region', region)
-        .order('publish_date', { ascending: false })
-        .order('created_at', { ascending: false });
+    const fetchNews = async () => {
+      try {
+        setIsLoading(true);
+        // Clean state immediately
+        setHighlights([]);
+        setRegularNews([]);
 
-      if (error) throw error;
+        // Busca todas as notícias publicadas
+        const { data, error } = await supabase
+          .from('news')
+          .select('*')
+          .eq('status', 'published')
+          .eq('region', region)
+          .order('publish_date', { ascending: false })
+          .order('created_at', { ascending: false });
 
-      if (data) {
-        const mappedNews: NewsItem[] = data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          summary: item.summary,
-          category: item.category,
-          date: new Date(item.publish_date).toLocaleDateString(
-            region === 'pt' ? 'pt-BR' : region === 'mx' ? 'es-MX' : 'en-US', 
-            { day: '2-digit', month: 'short', year: 'numeric' }
-          ),
-          author: item.author || 'AluInfo',
-          imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
-          isHighlight: item.is_highlight,
-          type: 'news'
-        }));
+        if (error) throw error;
 
-        // Mantemos a separação inicial apenas para priorizar destaques no topo da lista combinada
-        const highlightItems = mappedNews.filter(item => item.isHighlight);
-        const regularItems = mappedNews.filter(item => !item.isHighlight);
+        if (isMounted && data) {
+          const mappedNews: NewsItem[] = data.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            summary: item.summary,
+            category: item.category,
+            date: new Date(item.publish_date).toLocaleDateString(
+              region === 'pt' ? 'pt-BR' : region === 'mx' ? 'es-MX' : 'en-US', 
+              { day: '2-digit', month: 'short', year: 'numeric' }
+            ),
+            author: item.author || 'AluInfo',
+            imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
+            isHighlight: item.is_highlight,
+            type: 'news'
+          }));
 
-        setHighlights(highlightItems);
-        setRegularNews(regularItems);
+          // Mantemos a separação inicial apenas para priorizar destaques no topo da lista combinada
+          const highlightItems = mappedNews.filter(item => item.isHighlight);
+          const regularItems = mappedNews.filter(item => !item.isHighlight);
+
+          setHighlights(highlightItems);
+          setRegularNews(regularItems);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar notícias:', error);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Erro ao carregar notícias:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    fetchNews();
+
+    return () => {
+        isMounted = false;
+    };
+  }, [region]);
 
   // Lógica de filtro
   const filterItem = (item: NewsItem) => 
@@ -113,7 +123,7 @@ const News = () => {
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering"
                 />
             </div>
             <div className="block md:hidden">
@@ -174,16 +184,14 @@ const News = () => {
                                     {/* Gradiente escuro para legibilidade */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                                     
+                                    {/* Logo Overlay */}
                                     <div className="absolute top-6 left-6 md:left-8">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                                                <img src="https://i.ibb.co/HLfD5wgf/dualite-favicon.png" alt="Logo" className="w-6 h-6 object-contain" />
-                                            </div>
-                                            <div className="text-white font-bold leading-tight">
-                                                <div className="text-sm">INSTITUTO</div>
-                                                <div className="text-xs opacity-80">SAUDÁVEL</div>
-                                            </div>
-                                        </div>
+                                        <img 
+                                            src="/logo.png" 
+                                            alt="AluInfo" 
+                                            className="h-12 w-auto object-contain drop-shadow-lg" 
+                                            onError={(e) => e.currentTarget.style.display = 'none'}
+                                        />
                                     </div>
 
                                     <div className="absolute bottom-0 left-0 p-6 md:p-10 w-full md:w-4/5 lg:w-3/4">

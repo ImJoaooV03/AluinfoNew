@@ -30,9 +30,19 @@ const Home = () => {
 
   // Fetch Data from Supabase - FILTERED BY REGION
   useEffect(() => {
+    let isMounted = true; // Flag para evitar condições de corrida
+
     const fetchHomeData = async () => {
       try {
         setLoading(true);
+        
+        // Limpa estados imediatamente para evitar mostrar dados da região anterior
+        setNews([]);
+        setTechMaterials([]);
+        setHomeEbooks([]);
+        setHomeSuppliers([]);
+        setHomeFoundries([]);
+        setHomeEvents([]);
 
         // 1. Buscar Notícias
         const newsPromise = supabase
@@ -99,6 +109,9 @@ const Home = () => {
           eventsPromise
         ]);
 
+        // Se o componente foi desmontado ou a região mudou durante o fetch, ignora o resultado
+        if (!isMounted) return;
+
         if (newsRes.data) {
           setNews(newsRes.data.map((item: any) => ({
             id: item.id,
@@ -107,7 +120,7 @@ const Home = () => {
             category: item.category,
             date: new Date(item.publish_date).toLocaleDateString(region === 'pt' ? 'pt-BR' : region === 'mx' ? 'es-MX' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
             author: item.author,
-            imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
+            imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400?text=Sem+Imagem',
             isHighlight: item.is_highlight,
             type: 'news'
           })));
@@ -134,7 +147,7 @@ const Home = () => {
             category: item.category,
             date: new Date(item.created_at).getFullYear().toString(),
             downloads: item.downloads,
-            imageUrl: item.cover_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa',
+            imageUrl: item.cover_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/300x400/e5e5e5/333?text=Capa',
             fileUrl: item.file_url,
             author: item.author,
             type: 'ebook'
@@ -185,7 +198,7 @@ const Home = () => {
                 category: 'Evento',
                 date: new Date(item.event_date).toLocaleDateString(region === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
                 location: item.location,
-                imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/100x100/png?text=Evento',
+                imageUrl: item.image_url || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/100x100/png?text=Evento',
                 type: 'event',
                 linkUrl: item.link_url
             })));
@@ -194,11 +207,15 @@ const Home = () => {
       } catch (error) {
         console.error('Erro ao carregar dados da Home:', error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchHomeData();
+
+    return () => {
+      isMounted = false; // Cleanup ao mudar de região ou desmontar
+    };
   }, [region]); // Re-run when region changes
 
   // Handler para abrir o modal de download
@@ -243,10 +260,10 @@ const Home = () => {
         {/* Banner Topo */}
         <div className="w-full mb-8">
             <div className="hidden md:block">
-                <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" />
+                <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=MAGMA+Engineering" />
             </div>
             <div className="block md:hidden">
-                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile" />
+                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333333/ffffff?text=MAGMA+Mobile" />
             </div>
         </div>
 
@@ -280,7 +297,7 @@ const Home = () => {
                     )}
                 </section>
 
-                <AdSpot position="home_middle_1" className="w-full bg-gray-300" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/555555/ffffff?text=WALBERT" />
+                <AdSpot position="home_middle_1" className="w-full bg-gray-300" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/555555/ffffff?text=WALBERT" />
 
                 {/* Fornecedores */}
                 <section>
@@ -335,7 +352,7 @@ const Home = () => {
                     )}
                 </section>
 
-                <AdSpot position="home_middle_2" className="w-full bg-amber-100" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Automatic" />
+                <AdSpot position="home_middle_2" className="w-full bg-amber-100" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Automatic" />
 
                 {/* E-books */}
                 <section>
@@ -358,7 +375,7 @@ const Home = () => {
                     )}
                 </section>
 
-                <AdSpot position="home_final" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Sua+Empresa+Com..." />
+                <AdSpot position="home_final" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1000x150/e5e5e5/333?text=Sua+Empresa+Com..." />
 
                 {/* Eventos */}
                 <section>

@@ -7,7 +7,7 @@ import { useRegion } from '../../contexts/RegionContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { region } = useRegion();
+  const { region, logoUrl } = useRegion();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,13 +29,22 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Redireciona para o dashboard da região atual ou padrão
         const targetRegion = region || 'pt';
         navigate(`/${targetRegion}/admin`);
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Falha ao realizar login. Verifique suas credenciais.');
+      
+      // Tradução de erros comuns do Supabase
+      if (err.message === 'Invalid login credentials') {
+        setError('E-mail ou senha incorretos.');
+      } else if (err.message.includes('Email not confirmed')) {
+        setError('E-mail não confirmado. Verifique sua caixa de entrada.');
+      } else if (err.message.includes('Database error querying schema') || err.status === 500) {
+        setError('Erro de configuração do usuário (Identidade ausente). Execute a migração de correção no banco de dados.');
+      } else {
+        setError(err.message || 'Falha ao realizar login. Verifique suas credenciais.');
+      }
     } finally {
       setLoading(false);
     }
@@ -49,14 +58,19 @@ const Login = () => {
         <div className="bg-[#111] p-8 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600"></div>
           <div className="relative z-10">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg mx-auto mb-4">
-              A
-            </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">ALUINFO<span className="text-primary">.ADMIN</span></h2>
+            <img 
+                src={logoUrl || "/logo.png"} 
+                alt="AluInfo" 
+                className="h-16 w-auto mx-auto mb-4 object-contain"
+                onError={(e) => {
+                    if (e.currentTarget.src !== window.location.origin + '/logo.png') {
+                        e.currentTarget.src = '/logo.png';
+                    }
+                }}
+            />
             <p className="text-gray-400 text-xs mt-2 uppercase tracking-widest">Acesso Restrito ({region.toUpperCase()})</p>
           </div>
           
-          {/* Decorative circles */}
           <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
           <div className="absolute top-10 -right-10 w-24 h-24 bg-primary/10 rounded-full blur-xl"></div>
         </div>
@@ -64,9 +78,12 @@ const Login = () => {
         {/* Form Section */}
         <div className="p-8">
           {error && (
-            <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-sm flex items-start gap-3">
+            <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-sm flex items-start gap-3 animate-in slide-in-from-top-2">
               <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={18} />
-              <p className="text-sm text-red-700">{error}</p>
+              <div>
+                <p className="text-sm text-red-700 font-bold">Erro de Acesso</p>
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
             </div>
           )}
 

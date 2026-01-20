@@ -1,6 +1,7 @@
-import React from 'react';
-import { Menu, Bell, Search, ChevronDown, ExternalLink } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Menu, Bell, Search, ChevronDown, ExternalLink, User } from 'lucide-react';
 import { useRegion } from '../../contexts/RegionContext';
+import { supabase } from '../../lib/supabaseClient';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -8,6 +9,27 @@ interface AdminHeaderProps {
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ onMenuClick }) => {
   const { region } = useRegion();
+  const [user, setUser] = useState<{ name: string, avatar: string | null, role: string } | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url, role')
+          .eq('id', authUser.id)
+          .single();
+        
+        setUser({
+          name: profile?.full_name || authUser.email || 'Admin',
+          avatar: profile?.avatar_url || null,
+          role: profile?.role || 'admin'
+        });
+      }
+    };
+    fetchUser();
+  }, []);
 
   const getRegionLabel = () => {
     switch(region) {
@@ -61,11 +83,15 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onMenuClick }) => {
         {/* User Profile */}
         <div className="flex items-center gap-3 pl-4 border-l border-gray-100 cursor-pointer hover:opacity-80 transition-opacity">
           <div className="text-right hidden md:block">
-            <p className="text-sm font-bold text-gray-800">Admin User</p>
-            <p className="text-xs text-gray-500">{getRegionLabel()}</p>
+            <p className="text-sm font-bold text-gray-800">{user?.name || 'Carregando...'}</p>
+            <p className="text-xs text-gray-500 capitalize">{user?.role || 'Admin'} • {getRegionLabel()}</p>
           </div>
-          <div className="w-9 h-9 bg-gray-200 rounded-full overflow-hidden border border-gray-200">
-            <img src="https://i.pravatar.cc/150?u=1" alt="Admin" className="w-full h-full object-cover" />
+          <div className="w-9 h-9 bg-gray-200 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center">
+            {user?.avatar ? (
+                <img src={user.avatar} alt="Admin" className="w-full h-full object-cover" />
+            ) : (
+                <User size={20} className="text-gray-500" />
+            )}
           </div>
           <ChevronDown size={16} className="text-gray-400 hidden md:block" />
         </div>

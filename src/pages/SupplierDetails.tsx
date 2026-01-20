@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronRight, MapPin, Phone, Mail, Globe, Star, MessageCircle, Package, ExternalLink, Loader2, CheckCircle } from 'lucide-react';
+import { ChevronRight, MapPin, Phone, Mail, Globe, Star, MessageCircle, Package, ExternalLink, Loader2, CheckCircle, Tag } from 'lucide-react';
 import clsx from 'clsx';
 import AdSpot from '../components/AdSpot';
 import { supabase } from '../lib/supabaseClient';
@@ -160,7 +160,7 @@ const SupplierDetails = () => {
                 <AdSpot 
                     position="top_large" 
                     className="w-full bg-gray-200"
-                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=Espa%C3%A7o+Publicit%C3%A1rio"
+                    fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333333/ffffff?text=Espa%C3%A7o+Publicit%C3%A1rio"
                 />
             </div>
             <div className="block md:hidden">
@@ -189,7 +189,7 @@ const SupplierDetails = () => {
                     )}
                 >
                     {supplier.whatsapp ? <MessageCircle size={18} /> : <Mail size={18} />}
-                    {supplier.whatsapp ? 'Enviar WhatsApp' : 'Enviar Mensagem'}
+                    {supplier.whatsapp ? t('sendWhatsapp') : t('sendMessage')}
                 </a>
             </div>
         </div>
@@ -210,13 +210,13 @@ const SupplierDetails = () => {
                         ) : (
                             <span className="text-gray-400 font-bold text-lg flex flex-col items-center">
                                 <Package size={32} className="mb-2 opacity-50" />
-                                Sem Logo
+                                {t('noLogo')}
                             </span>
                         )}
                         {supplier.isVerified && (
                             <div className="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-bl-sm flex items-center gap-1 border-b border-l border-blue-100">
                                 <CheckCircle size={10} />
-                                VERIFICADO
+                                {t('verified')}
                             </div>
                         )}
                     </div>
@@ -229,7 +229,7 @@ const SupplierDetails = () => {
                                 supplier.status === 'active' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                             )}>
                                 <span className={clsx("w-1.5 h-1.5 rounded-full", supplier.status === 'active' ? "bg-green-600" : "bg-red-600")}></span>
-                                {supplier.status === 'active' ? 'Ativo' : 'Inativo'}
+                                {supplier.status === 'active' ? t('active') : t('inactive')}
                             </span>
                             <div className="flex items-center gap-1 text-amber-400">
                                 <Star size={16} fill="currentColor" />
@@ -242,21 +242,21 @@ const SupplierDetails = () => {
                             <div className="flex items-start gap-3">
                                 <MapPin className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
                                 <div className="min-w-0">
-                                    <span className="block text-xs text-gray-400 font-bold uppercase">Localização</span>
+                                    <span className="block text-xs text-gray-400 font-bold uppercase">{t('location')}</span>
                                     <span className="text-sm text-gray-700 break-words">{supplier.location || '-'}</span>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
                                 <Phone className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
                                 <div className="min-w-0">
-                                    <span className="block text-xs text-gray-400 font-bold uppercase">Telefone</span>
+                                    <span className="block text-xs text-gray-400 font-bold uppercase">{t('phone')}</span>
                                     <span className="text-sm text-gray-700 break-words">{supplier.phone || '-'}</span>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
                                 <Mail className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
                                 <div className="min-w-0">
-                                    <span className="block text-xs text-gray-400 font-bold uppercase">E-mail</span>
+                                    <span className="block text-xs text-gray-400 font-bold uppercase">{t('email')}</span>
                                     <span className="text-sm text-gray-700 break-all">{supplier.email || '-'}</span>
                                 </div>
                             </div>
@@ -264,9 +264,9 @@ const SupplierDetails = () => {
                                 <div className="flex items-start gap-3">
                                     <Globe className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
                                     <div className="min-w-0">
-                                        <span className="block text-xs text-gray-400 font-bold uppercase">Website</span>
+                                        <span className="block text-xs text-gray-400 font-bold uppercase">{t('website')}</span>
                                         <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 break-all">
-                                            Visitar site <ExternalLink size={10} />
+                                            {t('visitSite')} <ExternalLink size={10} />
                                         </a>
                                     </div>
                                 </div>
@@ -276,11 +276,11 @@ const SupplierDetails = () => {
                         {/* Meta Info */}
                         <div className="mt-8 pt-6 border-t border-gray-100 grid grid-cols-2 gap-4">
                             <div>
-                                <span className="block text-xs text-gray-400">Categoria</span>
+                                <span className="block text-xs text-gray-400">{t('category')}</span>
                                 <span className="text-sm font-bold text-gray-800">{supplier.category}</span>
                             </div>
                             <div>
-                                <span className="block text-xs text-gray-400">Membro desde</span>
+                                <span className="block text-xs text-gray-400">{t('memberSince')}</span>
                                 <span className="text-sm font-bold text-gray-800">{supplier.joinedDate}</span>
                             </div>
                         </div>
@@ -289,7 +289,7 @@ const SupplierDetails = () => {
 
                 {/* Description Card */}
                 <div className="bg-white rounded-sm border border-gray-200 shadow-sm p-6">
-                    <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Sobre a Empresa</h3>
+                    <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">{t('about')}</h3>
                     <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
                         {supplier.description || 'Nenhuma descrição disponível.'}
                     </p>
@@ -317,37 +317,39 @@ const SupplierDetails = () => {
                     {/* Products Section */}
                     {productList.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800 mb-4 pl-1 border-l-4 border-primary">Produtos</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-4 pl-1 border-l-4 border-primary">{t('products')}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {productList.map(product => (
-                                    <div key={product.id} className="bg-white border border-gray-200 rounded-sm p-4 flex gap-4 hover:shadow-md transition-shadow">
-                                        <div className="w-24 h-24 bg-gray-100 rounded-sm flex-shrink-0 border border-gray-100 overflow-hidden">
+                                    <div key={product.id} className="bg-white border border-gray-200 rounded-sm p-4 flex gap-4 hover:shadow-lg transition-all duration-300 group">
+                                        <div className="w-28 h-28 bg-gray-100 rounded-sm flex-shrink-0 border border-gray-100 overflow-hidden relative">
                                             {product.image ? (
-                                                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                                <img src={product.image} alt={product.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-300"><Package /></div>
+                                                <div className="w-full h-full flex items-center justify-center text-gray-300"><Package size={24} /></div>
                                             )}
                                         </div>
                                         <div className="flex flex-col flex-grow min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase truncate pr-2">{product.category}</span>
-                                                <span className="text-xs font-bold text-primary whitespace-nowrap">{product.price}</span>
+                                            <div className="flex justify-between items-start mb-1">
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase truncate pr-2 flex items-center gap-1">
+                                                    <Tag size={10} /> {product.category}
+                                                </span>
+                                                {product.price && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{product.price}</span>}
                                             </div>
-                                            <h4 className="font-bold text-gray-900 text-sm mb-1 truncate" title={product.name}>{product.name}</h4>
-                                            <p className="text-xs text-gray-500 line-clamp-2 mb-3">{product.description}</p>
+                                            <h4 className="font-bold text-gray-900 text-sm mb-2 truncate group-hover:text-primary transition-colors" title={product.name}>{product.name}</h4>
+                                            <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">{product.description}</p>
                                             
                                             {product.linkUrl ? (
                                                 <a 
                                                     href={product.linkUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="mt-auto w-fit text-xs font-bold text-gray-600 border border-gray-300 px-3 py-1 rounded-sm hover:bg-gray-50 transition-colors flex items-center gap-1"
+                                                    className="mt-auto w-fit text-xs font-bold text-white bg-primary hover:bg-primary-hover px-4 py-2 rounded-sm transition-colors flex items-center gap-1.5 shadow-sm"
                                                 >
-                                                    Ver Detalhes <ExternalLink size={10} />
+                                                    {t('viewDetails')} <ExternalLink size={10} />
                                                 </a>
                                             ) : (
-                                                <button disabled className="mt-auto w-fit text-xs font-bold text-gray-400 border border-gray-200 px-3 py-1 rounded-sm cursor-not-allowed">
-                                                    Ver Detalhes
+                                                <button disabled className="mt-auto w-fit text-xs font-bold text-gray-400 border border-gray-200 px-3 py-1.5 rounded-sm cursor-not-allowed">
+                                                    {t('viewDetails')}
                                                 </button>
                                             )}
                                         </div>
@@ -360,37 +362,39 @@ const SupplierDetails = () => {
                     {/* Services Section */}
                     {serviceList.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800 mb-4 pl-1 border-l-4 border-primary">Serviços</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-4 pl-1 border-l-4 border-primary">{t('services')}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {serviceList.map(service => (
-                                    <div key={service.id} className="bg-white border border-gray-200 rounded-sm p-4 flex gap-4 hover:shadow-md transition-shadow">
-                                        <div className="w-24 h-24 bg-gray-100 rounded-sm flex-shrink-0 border border-gray-100 overflow-hidden">
+                                    <div key={service.id} className="bg-white border border-gray-200 rounded-sm p-4 flex gap-4 hover:shadow-lg transition-all duration-300 group">
+                                        <div className="w-28 h-28 bg-gray-100 rounded-sm flex-shrink-0 border border-gray-100 overflow-hidden">
                                             {service.image ? (
-                                                <img src={service.image} alt={service.name} className="w-full h-full object-cover" />
+                                                <img src={service.image} alt={service.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-300"><Package /></div>
+                                                <div className="w-full h-full flex items-center justify-center text-gray-300"><Package size={24} /></div>
                                             )}
                                         </div>
                                         <div className="flex flex-col flex-grow min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase truncate pr-2">{service.category}</span>
-                                                <span className="text-xs font-bold text-primary whitespace-nowrap">{service.price}</span>
+                                            <div className="flex justify-between items-start mb-1">
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase truncate pr-2 flex items-center gap-1">
+                                                    <Tag size={10} /> {service.category}
+                                                </span>
+                                                {service.price && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{service.price}</span>}
                                             </div>
-                                            <h4 className="font-bold text-gray-900 text-sm mb-1 truncate" title={service.name}>{service.name}</h4>
-                                            <p className="text-xs text-gray-500 line-clamp-2 mb-3">{service.description}</p>
+                                            <h4 className="font-bold text-gray-900 text-sm mb-2 truncate group-hover:text-primary transition-colors" title={service.name}>{service.name}</h4>
+                                            <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">{service.description}</p>
                                             
                                             {service.linkUrl ? (
                                                 <a 
                                                     href={service.linkUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="mt-auto w-fit text-xs font-bold text-gray-600 border border-gray-300 px-3 py-1 rounded-sm hover:bg-gray-50 transition-colors flex items-center gap-1"
+                                                    className="mt-auto w-fit text-xs font-bold text-white bg-primary hover:bg-primary-hover px-4 py-2 rounded-sm transition-colors flex items-center gap-1.5 shadow-sm"
                                                 >
-                                                    Ver Detalhes <ExternalLink size={10} />
+                                                    {t('viewDetails')} <ExternalLink size={10} />
                                                 </a>
                                             ) : (
-                                                <button disabled className="mt-auto w-fit text-xs font-bold text-gray-400 border border-gray-200 px-3 py-1 rounded-sm cursor-not-allowed">
-                                                    Ver Detalhes
+                                                <button disabled className="mt-auto w-fit text-xs font-bold text-gray-400 border border-gray-200 px-3 py-1.5 rounded-sm cursor-not-allowed">
+                                                    {t('viewDetails')}
                                                 </button>
                                             )}
                                         </div>
@@ -401,8 +405,9 @@ const SupplierDetails = () => {
                     )}
 
                     {productList.length === 0 && serviceList.length === 0 && (
-                        <div className="text-center py-12 bg-white border border-gray-200 rounded-sm">
-                            <p className="text-gray-500 text-sm">Este fornecedor ainda não cadastrou produtos ou serviços.</p>
+                        <div className="text-center py-16 bg-white border border-gray-200 rounded-sm">
+                            <Package size={48} className="mx-auto text-gray-300 mb-4" />
+                            <p className="text-gray-500 text-sm font-medium">Este fornecedor ainda não cadastrou produtos ou serviços.</p>
                         </div>
                     )}
 

@@ -8,16 +8,21 @@ import SidebarAds from '../components/SidebarAds';
 import { supabase } from '../lib/supabaseClient';
 import { useCategories } from '../hooks/useCategories';
 import { useRegion } from '../contexts/RegionContext';
+import CategoryFilter from '../components/CategoryFilter';
 
 const Foundries = () => {
   const { region, t } = useRegion();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  // Novos estados para o filtro hierárquico
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+
   const [foundries, setFoundries] = useState<Foundry[]>([]);
   const [filteredFoundries, setFilteredFoundries] = useState<Foundry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { categories } = useCategories('foundry');
+  const { hierarchicalCategories } = useCategories('foundry');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -31,7 +36,7 @@ const Foundries = () => {
         .from('foundries')
         .select('*')
         .eq('status', 'active')
-        .eq('region', region) // Filtro por Região
+        .eq('region', region)
         .order('is_verified', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -75,8 +80,20 @@ const Foundries = () => {
       );
     }
 
-    if (selectedCategory) {
-      results = results.filter(f => f.category === selectedCategory);
+    // Filtro de Categoria Hierárquica
+    if (selectedMainCategory) {
+        if (selectedSubCategory) {
+            results = results.filter(f => f.category === selectedSubCategory);
+        } else {
+            const mainCatObj = hierarchicalCategories.find(c => c.name === selectedMainCategory);
+            if (mainCatObj) {
+                const validCategories = [
+                    mainCatObj.name, 
+                    ...(mainCatObj.subcategories?.map(sub => sub.name) || [])
+                ];
+                results = results.filter(f => validCategories.includes(f.category));
+            }
+        }
     }
 
     results.sort((a, b) => {
@@ -86,7 +103,7 @@ const Foundries = () => {
     });
 
     setFilteredFoundries(results);
-  }, [searchTerm, selectedCategory, foundries]);
+  }, [searchTerm, selectedMainCategory, selectedSubCategory, foundries, hierarchicalCategories]);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-12">
@@ -103,10 +120,10 @@ const Foundries = () => {
       <main className="container mx-auto px-4">
         <div className="w-full mb-8">
             <div className="hidden md:block">
-                <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333/fff?text=MAGMA" />
+                <AdSpot position="top_large" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://placehold.co/1200x150/333/fff?text=MAGMA" />
             </div>
             <div className="block md:hidden">
-                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333/fff?text=MAGMA" />
+                <AdSpot position="top_large_mobile" className="w-full bg-gray-200" fallbackImage="https://img-wrapper.vercel.app/image?url=https://placehold.co/400x150/333/fff?text=MAGMA" />
             </div>
         </div>
 
@@ -131,31 +148,15 @@ const Foundries = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-9">
-                <div className="mb-8 flex flex-wrap gap-2">
-                    <button 
-                        onClick={() => setSelectedCategory(null)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                            selectedCategory === null 
-                            ? 'bg-gray-800 text-white border-gray-800' 
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                        }`}
-                    >
-                        Todos
-                    </button>
-                    {categories.map(cat => (
-                        <button 
-                            key={cat.id}
-                            onClick={() => setSelectedCategory(cat.name === selectedCategory ? null : cat.name)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                                selectedCategory === cat.name 
-                                ? 'bg-primary text-white border-primary' 
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                            }`}
-                        >
-                            {cat.name}
-                        </button>
-                    ))}
-                </div>
+                
+                {/* Novo Filtro Hierárquico */}
+                <CategoryFilter 
+                    categories={hierarchicalCategories}
+                    selectedMainCategory={selectedMainCategory}
+                    selectedSubCategory={selectedSubCategory}
+                    onSelectMain={setSelectedMainCategory}
+                    onSelectSub={setSelectedSubCategory}
+                />
 
                 {isLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

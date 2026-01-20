@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useRegion } from '../contexts/RegionContext';
 
 const Footer = () => {
-  const { region, t } = useRegion();
+  const { region, t, logoUrl } = useRegion();
 
   return (
     <footer className="bg-dark-footer text-gray-400 text-sm font-sans mt-12 border-t border-gray-800">
@@ -12,9 +12,17 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Column 1: Brand & Contact */}
         <div>
-            <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded flex items-center justify-center text-white font-bold">A</div>
-                <span className="text-xl font-bold text-white">ALUINFO</span>
+            <div className="mb-6">
+                <img 
+                    src={logoUrl || "/logo.png"} 
+                    alt="AluInfo" 
+                    className="h-10 w-auto object-contain"
+                    onError={(e) => {
+                        if (e.currentTarget.src !== window.location.origin + '/logo.png') {
+                            e.currentTarget.src = '/logo.png';
+                        }
+                    }}
+                />
             </div>
             <p className="text-xs mb-6 leading-relaxed">
                 {t('portalDescription')}
